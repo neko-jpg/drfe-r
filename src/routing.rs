@@ -48,6 +48,8 @@ pub struct PacketHeader {
     pub visited: HashSet<NodeId>,
     /// Pressure values accumulated during Pressure mode
     pub pressure_values: HashMap<NodeId, f64>,
+    /// リカバリを開始した地点のゴールまでの距離（脱出判定用）
+    pub recovery_threshold: f64,
 }
 
 impl PacketHeader {
@@ -65,6 +67,7 @@ impl PacketHeader {
             ttl,
             visited: HashSet::new(),
             pressure_values: HashMap::new(),
+            recovery_threshold: f64::INFINITY, // 初期値は無限大
         }
     }
 
@@ -169,15 +172,16 @@ impl GPRouter {
     }
 
     /// Make routing decision for a packet at the current node
+    /// 【Sticky Recovery】: モードに応じた厳格な制御フローを実装
     pub fn route(&self, current_node: &NodeId, packet: &mut PacketHeader) -> RoutingDecision {
-        // Check TTL
+        // TTLチェック
         if packet.ttl == 0 {
             return RoutingDecision::Failed {
                 reason: "TTL expired".to_string(),
             };
         }
 
-        // Check if we reached destination
+        // 到達チェック
         if current_node == &packet.destination {
             return RoutingDecision::Delivered;
         }
@@ -191,21 +195,63 @@ impl GPRouter {
             }
         };
 
-        // Record visit
+        // 訪問記録
         packet.record_visit(current_node.clone());
 
-        // Try Gravity mode first
-        if let Some(decision) = self.try_gravity_routing(current, packet) {
-            return decision;
-        }
+        let current_dist = current.coord.point.hyperbolic_distance(&packet.target_coord);
 
-        // Try Tree-based routing (guaranteed to work on spanning tree)
-        if let Some(decision) = self.try_tree_routing(current, packet) {
-            return decision;
-        }
+        // 【修正点】: モードに応じた厳格な分岐
+        match packet.mode {
+            RoutingMode::Gravity => {
+                // Gravityモード: 通常のGreedy転送
+                if let Some(decision) = self.try_gravity_routing(current, packet) {
+                    return decision;
+                } else {
+                    // 局所解に陥った場合 -> Treeモードへ移行
+                    // 「現在の距離」を脱出閾値として記録する
+                    packet.mode = RoutingMode::Tree;
+                    packet.recovery_threshold = current_dist;
+                    
+                    // Treeルーティングを試行
+                    if let Some(decision) = self.try_tree_routing(current, packet) {
+                        return decision;
+                    }
+                    
+                    // Treeも失敗した場合はPressureへ
+                    return self.pressure_routing(current, packet);
+                }
+            },
+            RoutingMode::Tree => {
+                // Treeモード (Sticky): 閾値を下回るまでGravity禁止
+                
+                // 脱出判定: 現在位置がリカバリ開始地点より「確実に」ゴールに近いか？
+                if current_dist < packet.recovery_threshold - 1e-6 {
+                    // 脱出成功 -> Gravityモードへ復帰
+                    packet.mode = RoutingMode::Gravity;
+                    packet.recovery_threshold = f64::INFINITY;
+                    
+                    // Gravityを試行
+                    if let Some(decision) = self.try_gravity_routing(current, packet) {
+                        return decision;
+                    }
+                    // Gravityが失敗したら再びTreeへ
+                    packet.mode = RoutingMode::Tree;
+                    packet.recovery_threshold = current_dist;
+                }
 
-        // Fall back to Pressure mode as last resort
-        self.pressure_routing(current, packet)
+                // 脱出未完了 -> Tree構造に従って強制ルーティング (純粋な探索)
+                if let Some(decision) = self.traverse_tree(current, packet) {
+                    return decision;
+                }
+                
+                // Tree上でも行き止まりの場合はPressureへ
+                return self.pressure_routing(current, packet);
+            },
+            RoutingMode::Pressure => {
+                // Pressureモードのロジック（既存のまま）
+                return self.pressure_routing(current, packet);
+            }
+        }
     }
 
     /// Gravity Mode: Greedy forwarding to neighbor closest to target
@@ -290,6 +336,34 @@ impl GPRouter {
         }
 
         // Then try parent (even if visited - tree routing may need to backtrack)
+        if let Some(ref parent_id) = current.tree_parent {
+            return Some(RoutingDecision::Forward {
+                next_hop: parent_id.clone(),
+                mode: RoutingMode::Tree,
+            });
+        }
+
+        None
+    }
+
+    /// Pure Tree Traversal: Explore tree structure without greedy checks
+    /// Used during Sticky Recovery to prevent premature backtracking
+    fn traverse_tree(
+        &self,
+        current: &RoutingNode,
+        packet: &PacketHeader,
+    ) -> Option<RoutingDecision> {
+        // 1. Try unvisited children first (explore deeper)
+        for child_id in &current.tree_children {
+            if !packet.visited.contains(child_id) {
+                return Some(RoutingDecision::Forward {
+                    next_hop: child_id.clone(),
+                    mode: RoutingMode::Tree,
+                });
+            }
+        }
+
+        // 2. Then try parent (backtrack)
         if let Some(ref parent_id) = current.tree_parent {
             return Some(RoutingDecision::Forward {
                 next_hop: parent_id.clone(),
