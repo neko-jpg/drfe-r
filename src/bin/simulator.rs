@@ -47,6 +47,7 @@ pub struct SimResults {
     pub total_hops: u32,
     pub gravity_hops: u32,
     pub pressure_hops: u32,
+    pub tree_hops: u32,
     pub avg_hops: f64,
     pub success_rate: f64,
     pub ttl_failures: usize,
@@ -63,6 +64,7 @@ impl std::fmt::Display for SimResults {
         writeln!(f, "Success rate:         {:.2}%", self.success_rate * 100.0)?;
         writeln!(f, "Average hops:         {:.2}", self.avg_hops)?;
         writeln!(f, "Gravity hops:         {}", self.gravity_hops)?;
+        writeln!(f, "Tree hops:            {}", self.tree_hops)?;
         writeln!(f, "Pressure hops:        {}", self.pressure_hops)?;
         writeln!(f, "TTL failures:         {}", self.ttl_failures)?;
         writeln!(f, "No path failures:     {}", self.no_path_failures)?;
@@ -189,10 +191,16 @@ fn generate_barabasi_albert_network(config: &SimConfig, m: usize) -> GPRouter {
     let embedder = GreedyEmbedding::new();
     let embedding_result = embedder.embed(&adjacency).expect("Embedding should succeed");
 
-    // Note: Coordinate refinement disabled as it degrades performance
-    // The PIE embedding alone provides the best structure for greedy routing
+    // Build parent map from children map (reverse lookup)
+    let mut tree_parent: HashMap<NodeId, Option<NodeId>> = HashMap::new();
+    tree_parent.insert(embedding_result.root.clone(), None); // Root has no parent
+    for (parent_id, children) in &embedding_result.tree_children {
+        for child_id in children {
+            tree_parent.insert(child_id.clone(), Some(parent_id.clone()));
+        }
+    }
 
-    // Create router nodes with embedded coordinates
+    // Create router nodes with embedded coordinates and tree structure
     for i in 0..config.num_nodes {
         let node_id = &nodes[i];
         let point = embedding_result
@@ -201,10 +209,21 @@ fn generate_barabasi_albert_network(config: &SimConfig, m: usize) -> GPRouter {
             .copied()
             .unwrap_or_else(PoincareDiskPoint::origin);
         let coord = RoutingCoordinate::new(point, 0);
-        router.add_node(RoutingNode::new(node_id.clone(), coord));
+        let mut routing_node = RoutingNode::new(node_id.clone(), coord);
+        
+        // Set tree structure information
+        let parent = tree_parent.get(node_id).cloned().flatten();
+        let children = embedding_result
+            .tree_children
+            .get(node_id)
+            .cloned()
+            .unwrap_or_default();
+        routing_node.set_tree_info(parent, children);
+        
+        router.add_node(routing_node);
     }
 
-    // Add edges
+    // Add edges (all graph edges, not just tree edges)
     for i in 0..config.num_nodes {
         for &j in &adjacency_idx[i] {
             if i < j {
@@ -229,6 +248,7 @@ fn run_simulation(router: &GPRouter, config: &SimConfig) -> SimResults {
     let mut total_hops = 0u32;
     let mut gravity_hops = 0u32;
     let mut pressure_hops = 0u32;
+    let mut tree_hops = 0u32;
     let mut ttl_failures = 0usize;
     let mut no_path_failures = 0usize;
 
@@ -257,6 +277,7 @@ fn run_simulation(router: &GPRouter, config: &SimConfig) -> SimResults {
                 total_hops += result.hops;
                 gravity_hops += result.gravity_hops;
                 pressure_hops += result.pressure_hops;
+                tree_hops += result.tree_hops;
             } else {
                 failed += 1;
                 if let Some(ref reason) = result.failure_reason {
@@ -287,6 +308,7 @@ fn run_simulation(router: &GPRouter, config: &SimConfig) -> SimResults {
         total_hops,
         gravity_hops,
         pressure_hops,
+        tree_hops,
         avg_hops,
         success_rate: successful as f64 / config.num_routing_tests as f64,
         ttl_failures,

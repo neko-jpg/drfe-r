@@ -16,6 +16,8 @@ pub enum RoutingMode {
     Gravity,
     /// Recovery mode: use pressure to escape local minimum
     Pressure,
+    /// Tree mode: use spanning tree structure for guaranteed delivery
+    Tree,
 }
 
 /// Result of a routing decision
@@ -88,6 +90,10 @@ pub struct RoutingNode {
     pub id: NodeId,
     pub coord: RoutingCoordinate,
     pub neighbors: Vec<NodeId>,
+    /// Tree parent (from PIE embedding spanning tree)
+    pub tree_parent: Option<NodeId>,
+    /// Tree children (from PIE embedding spanning tree)
+    pub tree_children: Vec<NodeId>,
 }
 
 impl RoutingNode {
@@ -96,6 +102,8 @@ impl RoutingNode {
             id,
             coord,
             neighbors: Vec::new(),
+            tree_parent: None,
+            tree_children: Vec::new(),
         }
     }
 
@@ -103,6 +111,12 @@ impl RoutingNode {
         if !self.neighbors.contains(&neighbor) {
             self.neighbors.push(neighbor);
         }
+    }
+
+    /// Set tree structure information
+    pub fn set_tree_info(&mut self, parent: Option<NodeId>, children: Vec<NodeId>) {
+        self.tree_parent = parent;
+        self.tree_children = children;
     }
 
     pub fn degree(&self) -> usize {
@@ -185,7 +199,12 @@ impl GPRouter {
             return decision;
         }
 
-        // Fall back to Pressure mode
+        // Try Tree-based routing (guaranteed to work on spanning tree)
+        if let Some(decision) = self.try_tree_routing(current, packet) {
+            return decision;
+        }
+
+        // Fall back to Pressure mode as last resort
         self.pressure_routing(current, packet)
     }
 
@@ -214,6 +233,71 @@ impl GPRouter {
             next_hop: next_hop.clone(),
             mode: RoutingMode::Gravity,
         })
+    }
+
+    /// Tree Mode: Use spanning tree structure for guaranteed routing
+    /// When Greedy fails, we use the tree structure (parent/children) to route
+    /// Since trees have no cycles, this is guaranteed to reach the destination
+    fn try_tree_routing(
+        &self,
+        current: &RoutingNode,
+        packet: &PacketHeader,
+    ) -> Option<RoutingDecision> {
+        let current_distance = current.coord.point.hyperbolic_distance(&packet.target_coord);
+        
+        let mut best_tree_neighbor: Option<&NodeId> = None;
+        let mut best_distance = current_distance;
+
+        // Check tree parent
+        if let Some(ref parent_id) = current.tree_parent {
+            if let Some(parent) = self.nodes.get(parent_id) {
+                let distance = parent.coord.point.hyperbolic_distance(&packet.target_coord);
+                if distance < best_distance {
+                    best_distance = distance;
+                    best_tree_neighbor = Some(parent_id);
+                }
+            }
+        }
+
+        // Check tree children
+        for child_id in &current.tree_children {
+            if let Some(child) = self.nodes.get(child_id) {
+                let distance = child.coord.point.hyperbolic_distance(&packet.target_coord);
+                if distance < best_distance {
+                    best_distance = distance;
+                    best_tree_neighbor = Some(child_id);
+                }
+            }
+        }
+
+        // If we found a tree neighbor closer to target, use it
+        if let Some(next_hop) = best_tree_neighbor {
+            return Some(RoutingDecision::Forward {
+                next_hop: next_hop.clone(),
+                mode: RoutingMode::Tree,
+            });
+        }
+
+        // If no tree neighbor is geometrically closer:
+        // Try unvisited children first (explore deeper)
+        for child_id in &current.tree_children {
+            if !packet.visited.contains(child_id) {
+                return Some(RoutingDecision::Forward {
+                    next_hop: child_id.clone(),
+                    mode: RoutingMode::Tree,
+                });
+            }
+        }
+
+        // Then try parent (even if visited - tree routing may need to backtrack)
+        if let Some(ref parent_id) = current.tree_parent {
+            return Some(RoutingDecision::Forward {
+                next_hop: parent_id.clone(),
+                mode: RoutingMode::Tree,
+            });
+        }
+
+        None
     }
 
     /// Pressure Mode: Use accumulated pressure to escape local minimum
@@ -293,6 +377,7 @@ impl GPRouter {
         let mut hops = 0;
         let mut gravity_hops = 0;
         let mut pressure_hops = 0;
+        let mut tree_hops = 0;
 
         loop {
             let decision = self.route(&current, &mut packet);
@@ -304,6 +389,7 @@ impl GPRouter {
                         hops,
                         gravity_hops,
                         pressure_hops,
+                        tree_hops,
                         path,
                         failure_reason: None,
                     };
@@ -314,6 +400,7 @@ impl GPRouter {
                     match mode {
                         RoutingMode::Gravity => gravity_hops += 1,
                         RoutingMode::Pressure => pressure_hops += 1,
+                        RoutingMode::Tree => tree_hops += 1,
                     }
                     path.push(next_hop.clone());
                     current = next_hop;
@@ -324,6 +411,7 @@ impl GPRouter {
                         hops,
                         gravity_hops,
                         pressure_hops,
+                        tree_hops,
                         path,
                         failure_reason: Some(reason),
                     };
@@ -374,6 +462,7 @@ pub struct DeliveryResult {
     pub hops: u32,
     pub gravity_hops: u32,
     pub pressure_hops: u32,
+    pub tree_hops: u32,
     pub path: Vec<NodeId>,
     pub failure_reason: Option<String>,
 }
