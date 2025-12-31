@@ -1,0 +1,16 @@
+[package]
+name = "drfe_r"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rand = "0.8"
+sha2 = "0.10"
+num-complex = "0.4"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bin]]
+name = "simulator"
+path = "src/bin/simulator.rs"
