@@ -28,6 +28,10 @@ base64 = "0.21"
 governor = "0.6"
 nonzero_ext = "0.3"
 dashmap = "5.5"
+crossbeam = "0.8"
+opentelemetry = "0.21"
+opentelemetry_sdk = "0.21"
+opentelemetry-stdout = "0.2"
 rustls = "0.23"
 tokio-rustls = "0.26"
 rustls-pemfile = "2.0"
@@ -71,6 +75,18 @@ path = "src/bin/ablation_study.rs"
 [[bin]]
 name = "export_visualization"
 path = "src/bin/export_visualization.rs"
+
+[[bin]]
+name = "hierarchical_experiments"
+path = "src/bin/hierarchical_experiments.rs"
+
+[[bin]]
+name = "debug_failures"
+path = "src/bin/debug_failures.rs"
+
+[[bin]]
+name = "stretch_benchmark"
+path = "src/bin/stretch_benchmark.rs"
 
 [[bench]]
 name = "routing_latency"

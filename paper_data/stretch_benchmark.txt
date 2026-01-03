@@ -1,0 +1,91 @@
+warning: unused import: `crate::greedy_embedding::GreedyEmbedding`
+  --> src/hierarchical.rs:10:5
+   |
+10 | use crate::greedy_embedding::GreedyEmbedding;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `std::f64::consts::PI`
+  --> src/hyperbolic_models.rs:12:5
+   |
+12 | use std::f64::consts::PI;
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> src/telemetry.rs:7:5
+  |
+7 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `crate::routing::RoutingMode`
+  --> src/telemetry.rs:10:5
+   |
+10 | use crate::routing::RoutingMode;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `first_registration_ns` is never read
+   --> src/sybil.rs:256:5
+    |
+254 | struct RateLimitState {
+    |        -------------- field in this struct
+255 |     count: usize,
+256 |     first_registration_ns: u64,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `RateLimitState` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `drfe_r` (lib) generated 5 warnings (run `cargo fix --lib -p drfe_r` to apply 4 suggestions)
+   Compiling drfe_r v0.1.0 (/mnt/c/dev/network test)
+warning: unused variable: `time_pie`
+  --> src/bin/stretch_benchmark.rs:31:26
+   |
+31 |         let (router_pie, time_pie) = build_router_pie_only(&nodes, &adjacency_idx, &adjacency);
+   |                          ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_time_pie`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `time_refine`
+  --> src/bin/stretch_benchmark.rs:38:29
+   |
+38 |         let (router_refine, time_refine) = build_router_pie_refine(&nodes, &adjacency_idx, &adjacency, 100);
+   |                             ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_time_refine`
+
+warning: unused variable: `i`
+   --> src/bin/stretch_benchmark.rs:143:10
+    |
+143 |     for (i, node_id) in nodes.iter().enumerate() {
+    |          ^ help: if this is intentional, prefix it with an underscore: `_i`
+
+warning: unused variable: `i`
+   --> src/bin/stretch_benchmark.rs:188:10
+    |
+188 |     for (i, node_id) in nodes.iter().enumerate() {
+    |          ^ help: if this is intentional, prefix it with an underscore: `_i`
+
+warning: `drfe_r` (bin "stretch_benchmark") generated 4 warnings (run `cargo fix --bin "stretch_benchmark" -p drfe_r` to apply 4 suggestions)
+    Finished `release` profile [optimized] target(s) in 8.91s
+     Running `target/release/stretch_benchmark`
+Stretch Optimization Benchmark
+==============================
+
+Nodes    Strategy        Success%   AvgHops    Stretch    Gravity%  
+----------------------------------------------------------------------
+100      PIE             100.00     11.04      4.37       17.84     
+100      PIE+Refine100   100.00     30.82      12.20      4.82      
+100      PIE+Refine500   100.00     42.04      16.65      3.22      
+
+300      PIE             100.00     50.23      17.03      4.30      
+300      PIE+Refine100   100.00     146.40     49.63      1.19      
+300      PIE+Refine500   100.00     182.56     61.88      0.74      
+
+500      PIE             100.00     130.59     40.55      1.74      
+500      PIE+Refine100   100.00     297.13     92.28      0.61      
+500      PIE+Refine500   100.00     373.99     116.14     0.38      
+
+
+Conclusion:
+  - PIE provides tree-based greedy, but non-tree edges are ignored
+  - Refine tries to adjust coordinates, but may break greedy property
+  - Need a different approach that preserves greedy while optimizing stretch

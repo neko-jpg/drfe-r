@@ -5,16 +5,23 @@
 pub mod api;
 pub mod audit;
 pub mod baselines;
+pub mod byzantine;
 pub mod chat;
+pub mod chaos;
 pub mod coordinates;
 pub mod greedy_embedding;
 pub mod grpc;
+pub mod hierarchical;
+pub mod hyperbolic_models;
+pub mod lockfree;
 pub mod network;
 pub mod network_tls;
 pub mod rendezvous;
 pub mod ricci;
 pub mod routing;
 pub mod stability;
+pub mod sybil;
+pub mod telemetry;
 pub mod tls;
 
 use serde::{Deserialize, Serialize};

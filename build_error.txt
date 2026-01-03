@@ -1,0 +1,238 @@
+   Compiling serde_core v1.0.228
+   Compiling zerocopy v0.8.31
+   Compiling httparse v1.10.1
+   Compiling anyhow v1.0.100
+   Compiling rustversion v1.0.22
+   Compiling generic-array v0.14.7
+   Compiling num-traits v0.2.19
+   Compiling zmij v1.0.3
+   Compiling rustix v1.1.3
+   Compiling prettyplease v0.2.37
+   Compiling serde_json v1.0.148
+   Compiling hyper v0.14.32
+   Compiling hyper v1.8.1
+   Compiling thiserror v2.0.17
+   Compiling portable-atomic v1.13.0
+   Compiling ring v0.17.14
+   Compiling prost-derive v0.12.6
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling axum-core v0.3.4
+   Compiling axum v0.6.20
+   Compiling axum-core v0.4.5
+   Compiling ordered-float v4.6.0
+   Compiling sha1 v0.10.6
+   Compiling sha2 v0.10.9
+   Compiling curve25519-dalek v4.1.3
+   Compiling rmp v0.8.15
+   Compiling num-complex v0.4.6
+   Compiling hyper-util v0.1.19
+   Compiling ppv-lite86 v0.2.21
+   Compiling tempfile v3.24.0
+   Compiling rand_chacha v0.3.1
+   Compiling serde v1.0.228
+   Compiling serde_path_to_error v0.1.20
+   Compiling uuid v1.19.0
+   Compiling rand v0.8.5
+   Compiling prost v0.12.6
+   Compiling tracing-serde v0.2.0
+   Compiling serde_urlencoded v0.7.1
+   Compiling ed25519 v2.2.3
+   Compiling chrono v0.4.42
+   Compiling rmp-serde v1.3.1
+   Compiling prost-types v0.12.6
+   Compiling ed25519-dalek v2.2.0
+   Compiling bincode v1.3.3
+   Compiling tungstenite v0.24.0
+   Compiling tower v0.4.13
+   Compiling opentelemetry_sdk v0.21.2
+   Compiling tracing-subscriber v0.3.22
+   Compiling governor v0.6.3
+   Compiling prost-build v0.12.6
+   Compiling tokio-tungstenite v0.24.0
+   Compiling opentelemetry-stdout v0.2.0
+   Compiling axum v0.7.9
+   Compiling tonic-build v0.11.0
+   Compiling tracing-appender v0.2.4
+   Compiling hyper-timeout v0.4.1
+   Compiling drfe_r v0.1.0 (/mnt/c/dev/network test)
+   Compiling rcgen v0.12.1
+   Compiling tonic v0.11.0
+warning: unused import: `crate::greedy_embedding::GreedyEmbedding`
+  --> src/hierarchical.rs:10:5
+   |
+10 | use crate::greedy_embedding::GreedyEmbedding;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `AdaptiveRicciFlow`
+  --> src/hierarchical.rs:11:20
+   |
+11 | use crate::ricci::{AdaptiveRicciFlow, GraphNode, RicciGraph};
+   |                    ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::f64::consts::PI`
+  --> src/hyperbolic_models.rs:12:5
+   |
+12 | use std::f64::consts::PI;
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> src/telemetry.rs:7:5
+  |
+7 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `crate::routing::RoutingMode`
+  --> src/telemetry.rs:10:5
+   |
+10 | use crate::routing::RoutingMode;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `iterations`
+   --> src/hierarchical.rs:110:32
+    |
+110 |     pub fn optimize(&mut self, iterations: usize) {
+    |                                ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_iterations`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: field `first_registration_ns` is never read
+   --> src/sybil.rs:256:5
+    |
+254 | struct RateLimitState {
+    |        -------------- field in this struct
+255 |     count: usize,
+256 |     first_registration_ns: u64,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `RateLimitState` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `drfe_r` (lib) generated 7 warnings (run `cargo fix --lib -p drfe_r` to apply 6 suggestions)
+error[E0277]: the trait bound `HierarchicalStats: serde::Serialize` is not satisfied
+    --> src/bin/hierarchical_experiments.rs:42:24
+     |
+  42 | #[derive(Debug, Clone, Serialize, Deserialize)]
+     |                        ^^^^^^^^^ the trait `Serialize` is not implemented for `HierarchicalStats`
+...
+  46 |     pub stats: HierarchicalStats,
+     |     --- required by a bound introduced by this call
+     |
+     = note: for local types consider adding `#[derive(serde::Serialize)]` to your `HierarchicalStats` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `Serialize`:
+               &'a T
+               &'a mut T
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+               (T0, T1, T2, T3)
+               (T0, T1, T2, T3, T4)
+             and 183 others
+note: required by a bound in `_::_serde::ser::SerializeStruct::serialize_field`
+    --> /home/arat2/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.228/src/ser/mod.rs:1917:21
+     |
+1915 |     fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), Self::Error>
+     |        --------------- required by a bound in this associated function
+1916 |     where
+1917 |         T: ?Sized + Serialize;
+     |                     ^^^^^^^^^ required by this bound in `SerializeStruct::serialize_field`
+     = note: this error originates in the derive macro `Serialize` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `HierarchicalStats: serde::Deserialize<'de>` is not satisfied
+    --> src/bin/hierarchical_experiments.rs:46:16
+     |
+  46 |     pub stats: HierarchicalStats,
+     |                ^^^^^^^^^^^^^^^^^ the trait `Deserialize<'_>` is not implemented for `HierarchicalStats`
+     |
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `HierarchicalStats` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `Deserialize<'de>`:
+               `&'a Path` implements `Deserialize<'de>`
+               `&'a [u8]` implements `Deserialize<'de>`
+               `&'a serde_json::value::RawValue` implements `Deserialize<'de>`
+               `&'a str` implements `Deserialize<'de>`
+               `()` implements `Deserialize<'de>`
+               `(T,)` implements `Deserialize<'de>`
+               `(T0, T1)` implements `Deserialize<'de>`
+               `(T0, T1, T2)` implements `Deserialize<'de>`
+             and 174 others
+note: required by a bound in `next_element`
+    --> /home/arat2/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.228/src/de/mod.rs:1771:12
+     |
+1769 |     fn next_element<T>(&mut self) -> Result<Option<T>, Self::Error>
+     |        ------------ required by a bound in this associated function
+1770 |     where
+1771 |         T: Deserialize<'de>,
+     |            ^^^^^^^^^^^^^^^^ required by this bound in `SeqAccess::next_element`
+
+error[E0277]: the trait bound `HierarchicalStats: serde::Deserialize<'de>` is not satisfied
+    --> src/bin/hierarchical_experiments.rs:46:16
+     |
+  46 |     pub stats: HierarchicalStats,
+     |                ^^^^^^^^^^^^^^^^^ the trait `Deserialize<'_>` is not implemented for `HierarchicalStats`
+     |
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `HierarchicalStats` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `Deserialize<'de>`:
+               `&'a Path` implements `Deserialize<'de>`
+               `&'a [u8]` implements `Deserialize<'de>`
+               `&'a serde_json::value::RawValue` implements `Deserialize<'de>`
+               `&'a str` implements `Deserialize<'de>`
+               `()` implements `Deserialize<'de>`
+               `(T,)` implements `Deserialize<'de>`
+               `(T0, T1)` implements `Deserialize<'de>`
+               `(T0, T1, T2)` implements `Deserialize<'de>`
+             and 174 others
+note: required by a bound in `next_value`
+    --> /home/arat2/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.228/src/de/mod.rs:1916:12
+     |
+1914 |     fn next_value<V>(&mut self) -> Result<V, Self::Error>
+     |        ---------- required by a bound in this associated function
+1915 |     where
+1916 |         V: Deserialize<'de>,
+     |            ^^^^^^^^^^^^^^^^ required by this bound in `MapAccess::next_value`
+
+error[E0277]: the trait bound `HierarchicalStats: serde::Deserialize<'de>` is not satisfied
+  --> src/bin/hierarchical_experiments.rs:42:35
+   |
+42 | #[derive(Debug, Clone, Serialize, Deserialize)]
+   |                                   ^^^^^^^^^^^ the trait `Deserialize<'_>` is not implemented for `HierarchicalStats`
+   |
+   = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `HierarchicalStats` type
+   = note: for types from other crates check whether the crate offers a `serde` feature flag
+   = help: the following other types implement trait `Deserialize<'de>`:
+             `&'a Path` implements `Deserialize<'de>`
+             `&'a [u8]` implements `Deserialize<'de>`
+             `&'a serde_json::value::RawValue` implements `Deserialize<'de>`
+             `&'a str` implements `Deserialize<'de>`
+             `()` implements `Deserialize<'de>`
+             `(T,)` implements `Deserialize<'de>`
+             `(T0, T1)` implements `Deserialize<'de>`
+             `(T0, T1, T2)` implements `Deserialize<'de>`
+           and 174 others
+note: required by a bound in `_::_serde::__private228::de::missing_field`
+  --> /home/arat2/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:26:8
+   |
+24 | pub fn missing_field<'de, V, E>(field: &'static str) -> Result<V, E>
+   |        ------------- required by a bound in this function
+25 | where
+26 |     V: Deserialize<'de>,
+   |        ^^^^^^^^^^^^^^^^ required by this bound in `missing_field`
+   = note: this error originates in the derive macro `Deserialize` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused variable: `nodes`
+   --> src/bin/hierarchical_experiments.rs:231:22
+    |
+231 | fn bfs_shortest_path(nodes: &[NodeId], edges: &[(NodeId, NodeId)], src: &NodeId, dst: &NodeId) -> Option<u32> {
+    |                      ^^^^^ help: if this is intentional, prefix it with an underscore: `_nodes`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+For more information about this error, try `rustc --explain E0277`.
+warning: `drfe_r` (bin "hierarchical_experiments") generated 1 warning
+error: could not compile `drfe_r` (bin "hierarchical_experiments") due to 4 previous errors; 1 warning emitted

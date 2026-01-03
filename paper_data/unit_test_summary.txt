@@ -1,0 +1,2 @@
+running 154 tests
+test result: FAILED. 153 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.33s

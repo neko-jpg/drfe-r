@@ -44,3 +44,13 @@ venv/
 
 # Kiro specs (project management)
 .kiro/
+
+# Debug and build output
+build_result.txt
+experiment_debug.txt
+*_debug.txt
+*_output.txt
+
+# Simulator output (temporary)
+paper_data/sim_*.txt
+paper_data/debug_*.txt

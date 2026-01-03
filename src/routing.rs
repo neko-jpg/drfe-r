@@ -237,6 +237,7 @@ impl GPRouter {
                     packet.mode = RoutingMode::Gravity;
                     packet.recovery_threshold = f64::INFINITY;
                     packet.dfs_stack.clear(); // DFSスタックをクリア
+                    packet.visited.clear(); // 訪問履歴もクリア
                     
                     // Gravityを試行
                     if let Some(decision) = self.try_gravity_routing(current, packet) {
@@ -245,6 +246,10 @@ impl GPRouter {
                     // Gravityが失敗したら（稀なケースだが）再びTreeへ
                     packet.mode = RoutingMode::Tree;
                     packet.recovery_threshold = current_dist;
+                    // Tree再開時はvisitedをリセット
+                    packet.visited.clear();
+                    packet.visited.insert(current_node.clone());
+                    packet.dfs_stack.clear();
                 }
 
                 // 脱出未完了 -> グラフDFSで強制ルーティング
@@ -252,7 +257,22 @@ impl GPRouter {
                     return decision;
                 }
                 
-                // DFSでも行き止まりの場合は失敗（グラフが非連結）
+                // DFSがNoneを返した = 全探索完了だが宛先未到達
+                // これは本来ありえない（連結グラフなら）
+                // 念のためvisitedをリセットして再試行
+                if packet.visited.len() < self.node_count() {
+                    // まだ全ノードを訪問していない -> バグの可能性
+                    // visitedとスタックをリセットして再開
+                    packet.visited.clear();
+                    packet.visited.insert(current_node.clone());
+                    packet.dfs_stack.clear();
+                    
+                    if let Some(decision) = self.traverse_graph_dfs(current, packet) {
+                        return decision;
+                    }
+                }
+                
+                // 本当に失敗（グラフが非連結）
                 return RoutingDecision::Failed { reason: "Graph is disconnected".to_string() };
             },
             RoutingMode::Pressure => {

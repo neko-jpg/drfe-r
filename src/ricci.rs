@@ -543,6 +543,260 @@ impl Default for RicciFlow {
     }
 }
 
+/// Adaptive Ricci Flow with dynamic regularization
+/// 
+/// Uses annealing schedule to adjust step size based on:
+/// - Iteration count (exponential decay)
+/// - Curvature variance (higher variance = smaller steps)
+/// - Stress trend (increasing stress = smaller steps)
+pub struct AdaptiveRicciFlow {
+    /// Initial step size (alpha_0)
+    pub initial_step: f64,
+    /// Minimum step size
+    pub min_step: f64,
+    /// Decay rate per iteration
+    pub decay_rate: f64,
+    /// Curvature sensitivity factor
+    pub curvature_sensitivity: f64,
+    /// Target curvature (usually 0)
+    pub target_curvature: f64,
+    /// Coordinate update step
+    pub coord_step: f64,
+}
+
+impl AdaptiveRicciFlow {
+    pub fn new() -> Self {
+        Self {
+            initial_step: 0.3,
+            min_step: 0.01,
+            decay_rate: 0.05,
+            curvature_sensitivity: 1.0,
+            target_curvature: 0.0,
+            coord_step: 0.1,
+        }
+    }
+
+    /// Compute adaptive step size based on iteration and curvature statistics
+    pub fn compute_step(&self, iteration: usize, curvature_variance: f64) -> f64 {
+        // Exponential decay schedule: α(t) = α_0 * exp(-decay * t)
+        let schedule_factor = (-self.decay_rate * iteration as f64).exp();
+        
+        // Curvature-aware adjustment: reduce step when variance is high
+        let curvature_factor = 1.0 / (1.0 + curvature_variance * self.curvature_sensitivity);
+        
+        // Combined adaptive step
+        let adaptive_step = self.initial_step * schedule_factor * curvature_factor;
+        
+        adaptive_step.max(self.min_step)
+    }
+
+    /// Compute curvature variance from curvature results
+    fn curvature_variance(curvatures: &[CurvatureResult]) -> f64 {
+        if curvatures.is_empty() {
+            return 0.0;
+        }
+        let mean = curvatures.iter().map(|c| c.value).sum::<f64>() / curvatures.len() as f64;
+        let variance = curvatures.iter()
+            .map(|c| (c.value - mean).powi(2))
+            .sum::<f64>() / curvatures.len() as f64;
+        variance
+    }
+
+    /// Perform one step of adaptive Ricci flow
+    pub fn flow_step(&self, graph: &RicciGraph, iteration: usize) -> (HashMap<Edge, f64>, f64) {
+        let curvatures = graph.compute_all_curvatures();
+        let variance = Self::curvature_variance(&curvatures);
+        let step_size = self.compute_step(iteration, variance);
+        
+        let mut new_lengths = HashMap::new();
+
+        for result in curvatures {
+            let node_u = graph.get_node(&result.edge.u);
+            let node_v = graph.get_node(&result.edge.v);
+
+            if let (Some(u), Some(v)) = (node_u, node_v) {
+                let current_length = u.coord.point.hyperbolic_distance(&v.coord.point);
+
+                // Ricci flow: dℓ/dt = -κ * ℓ with adaptive step
+                let flow_factor = 1.0 - step_size * (result.value - self.target_curvature);
+                let new_length = current_length * flow_factor.max(0.1).min(2.0);
+
+                new_lengths.insert(result.edge, new_length);
+            }
+        }
+
+        (new_lengths, step_size)
+    }
+
+    /// Run adaptive optimization with early stopping
+    pub fn run_optimization(
+        &self,
+        graph: &mut RicciGraph,
+        max_iterations: usize,
+        coord_iterations: usize,
+        convergence_threshold: f64,
+    ) -> AdaptiveOptimizationResult {
+        use crate::PoincareDiskPoint;
+        
+        let mut stress_history = Vec::new();
+        let mut step_history = Vec::new();
+        let mut total_stress = f64::MAX;
+        let mut converged = false;
+
+        for iteration in 0..max_iterations {
+            // 1. Compute target lengths with adaptive step
+            let (target_lengths, step_size) = self.flow_step(graph, iteration);
+            step_history.push(step_size);
+
+            // 2. Optimize coordinates
+            let mut coords: HashMap<NodeId, (f64, f64)> = HashMap::new();
+            for (id, node) in &graph.nodes {
+                coords.insert(id.clone(), (node.coord.point.x, node.coord.point.y));
+            }
+
+            let opt_step = self.coord_step * step_size.sqrt(); // Scale coord step with flow step
+
+            for _ in 0..coord_iterations {
+                let mut gradients: HashMap<NodeId, (f64, f64)> = HashMap::new();
+                for id in coords.keys() {
+                    gradients.insert(id.clone(), (0.0, 0.0));
+                }
+
+                for (edge, &target_len) in &target_lengths {
+                    let (ux, uy) = match coords.get(&edge.u) {
+                        Some(&c) => c,
+                        None => continue,
+                    };
+                    let (vx, vy) = match coords.get(&edge.v) {
+                        Some(&c) => c,
+                        None => continue,
+                    };
+
+                    let point_u = match PoincareDiskPoint::new(ux, uy) {
+                        Some(p) => p,
+                        None => continue,
+                    };
+                    let point_v = match PoincareDiskPoint::new(vx, vy) {
+                        Some(p) => p,
+                        None => continue,
+                    };
+
+                    let current_dist = point_u.hyperbolic_distance(&point_v);
+                    if current_dist < 1e-10 {
+                        continue;
+                    }
+
+                    let stress = current_dist - target_len;
+                    let dx = vx - ux;
+                    let dy = vy - uy;
+                    let eucl_dist = (dx * dx + dy * dy).sqrt().max(1e-10);
+
+                    let r_u_sq = ux * ux + uy * uy;
+                    let r_v_sq = vx * vx + vy * vy;
+                    let conf_u = 2.0 / (1.0 - r_u_sq).max(0.01);
+                    let conf_v = 2.0 / (1.0 - r_v_sq).max(0.01);
+
+                    let grad_magnitude = stress * conf_u * conf_v / eucl_dist * opt_step;
+                    let grad_x = dx / eucl_dist * grad_magnitude;
+                    let grad_y = dy / eucl_dist * grad_magnitude;
+
+                    if let Some(g) = gradients.get_mut(&edge.u) {
+                        g.0 += grad_x;
+                        g.1 += grad_y;
+                    }
+                    if let Some(g) = gradients.get_mut(&edge.v) {
+                        g.0 -= grad_x;
+                        g.1 -= grad_y;
+                    }
+                }
+
+                // Apply gradients with metric scaling
+                for (id, coord) in coords.iter_mut() {
+                    if let Some(&(gx, gy)) = gradients.get(id) {
+                        let (x, y) = *coord;
+                        let r_sq = x * x + y * y;
+                        let metric_scale = ((1.0 - r_sq) * (1.0 - r_sq)) / 4.0;
+                        let metric_scale = metric_scale.max(0.001);
+
+                        let new_x = x - gx * metric_scale;
+                        let new_y = y - gy * metric_scale;
+
+                        let new_r_sq = new_x * new_x + new_y * new_y;
+                        if new_r_sq >= 0.98 * 0.98 {
+                            let scale = 0.95 / new_r_sq.sqrt();
+                            coord.0 = new_x * scale;
+                            coord.1 = new_y * scale;
+                        } else {
+                            coord.0 = new_x;
+                            coord.1 = new_y;
+                        }
+                    }
+                }
+            }
+
+            // 3. Update graph coordinates
+            for (id, (x, y)) in &coords {
+                if let Some(point) = PoincareDiskPoint::new(*x, *y) {
+                    if let Some(node) = graph.nodes.get_mut(id) {
+                        node.coord.point = point;
+                    }
+                }
+            }
+
+            // 4. Compute stress
+            let mut current_stress = 0.0;
+            for (edge, &target) in &target_lengths {
+                if let (Some(u), Some(v)) = (graph.get_node(&edge.u), graph.get_node(&edge.v)) {
+                    let actual = u.coord.point.hyperbolic_distance(&v.coord.point);
+                    current_stress += (actual - target).powi(2);
+                }
+            }
+            stress_history.push(current_stress);
+
+            // 5. Check convergence
+            if stress_history.len() >= 2 {
+                let prev_stress = stress_history[stress_history.len() - 2];
+                let improvement = (prev_stress - current_stress).abs() / prev_stress.max(1e-10);
+                if improvement < convergence_threshold {
+                    converged = true;
+                    total_stress = current_stress;
+                    break;
+                }
+            }
+            total_stress = current_stress;
+        }
+
+        AdaptiveOptimizationResult {
+            final_stress: total_stress,
+            iterations_used: stress_history.len(),
+            converged,
+            stress_history,
+            step_history,
+        }
+    }
+}
+
+impl Default for AdaptiveRicciFlow {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Result of adaptive Ricci Flow optimization
+#[derive(Debug, Clone)]
+pub struct AdaptiveOptimizationResult {
+    /// Final stress value
+    pub final_stress: f64,
+    /// Number of iterations used
+    pub iterations_used: usize,
+    /// Whether convergence was achieved
+    pub converged: bool,
+    /// Stress at each iteration
+    pub stress_history: Vec<f64>,
+    /// Step size at each iteration
+    pub step_history: Vec<f64>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
