@@ -36,53 +36,19 @@ venv/
 *.tmp
 *.temp
 
-# Test output (keep paper_data, but ignore large generated files)
-# paper_data/ablation/ablation_results.json  # Keep this - important for paper
-
-# Archive (old experimental data)
-# archive/  # Keep for now
-
 # Kiro specs (project management)
 .kiro/
 
-# Debug and build output
+# Debug and build output (temporary)
+build_error*.txt
+build_log.json
 build_result.txt
-experiment_debug.txt
+experiment_*.txt
 *_debug.txt
 *_output.txt
 
-# Simulator output (temporary)
+# Simulator output (temporary, kept in paper_data/ for analysis)
 paper_data/sim_*.txt
 paper_data/debug_*.txt
 
-# Root directory temporary files (should be in paper_data/ or archive/)
-analyze_*.py
-baseline_comparison.json
-baseline_comparison_summary.md
-benchmark_results.txt
-benchmark_summary.md
-build_error.txt
-build_error_output.txt
-build_log.json
-build_result.txt
-chat_scale_*.json
-chat_scale_*.md
-experiment_*.txt
-generate_paper_tables.py
-organize_experimental_data.py
-optimization_results.md
-project_status_summary.md
-robustness_final.md
-robustness_results.md
-run_*.sh
-scalability_*.json
-scalability_*.md
-topology_experiments*.json
-topology_experiments_summary.md
-theory.md
-PHASE6_*.md
-
-# Keep only essential root files:
-# - Cargo.toml, Cargo.lock
-# - README.md, LICENSE
-# - build.rs
+archive/phase6/
