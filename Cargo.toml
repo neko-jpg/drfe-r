@@ -64,6 +64,14 @@ path = "src/bin/baseline_comparison.rs"
 name = "chat_scale_test"
 path = "src/bin/chat_scale_test.rs"
 
+[[bin]]
+name = "ablation_study"
+path = "src/bin/ablation_study.rs"
+
+[[bin]]
+name = "export_visualization"
+path = "src/bin/export_visualization.rs"
+
 [[bench]]
 name = "routing_latency"
 harness = false

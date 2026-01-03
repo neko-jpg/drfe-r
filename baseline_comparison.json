@@ -1,0 +1,365 @@
+{
+  "timestamp": "2026-01-02T00:13:44.453642450+00:00",
+  "results": [
+    {
+      "protocol": "DRFE-R",
+      "network_size": 50,
+      "topology": "ba",
+      "success_rate": 1.0,
+      "avg_hops": 3.63,
+      "avg_latency_us": 1.69,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 50,
+      "topology": "ba",
+      "success_rate": 1.0,
+      "avg_hops": 4.86,
+      "avg_latency_us": 0.09,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 50,
+      "topology": "ba",
+      "success_rate": 1.0,
+      "avg_hops": 1.11,
+      "avg_latency_us": 6.06,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "DRFE-R",
+      "network_size": 50,
+      "topology": "random",
+      "success_rate": 0.96,
+      "avg_hops": 3.625,
+      "avg_latency_us": 1.09375,
+      "total_tests": 100,
+      "successful_tests": 96
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 50,
+      "topology": "random",
+      "success_rate": 0.99,
+      "avg_hops": 5.08080808080808,
+      "avg_latency_us": 0.20202020202020202,
+      "total_tests": 100,
+      "successful_tests": 99
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 50,
+      "topology": "random",
+      "success_rate": 0.97,
+      "avg_hops": 1.0721649484536082,
+      "avg_latency_us": 5.319587628865979,
+      "total_tests": 100,
+      "successful_tests": 97
+    },
+    {
+      "protocol": "DRFE-R",
+      "network_size": 50,
+      "topology": "grid",
+      "success_rate": 0.98,
+      "avg_hops": 4.989795918367347,
+      "avg_latency_us": 1.163265306122449,
+      "total_tests": 100,
+      "successful_tests": 98
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 50,
+      "topology": "grid",
+      "success_rate": 0.96,
+      "avg_hops": 4.5625,
+      "avg_latency_us": 0.13541666666666666,
+      "total_tests": 100,
+      "successful_tests": 96
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 50,
+      "topology": "grid",
+      "success_rate": 1.0,
+      "avg_hops": 1.13,
+      "avg_latency_us": 6.35,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "DRFE-R",
+      "network_size": 100,
+      "topology": "ba",
+      "success_rate": 0.98,
+      "avg_hops": 6.591836734693878,
+      "avg_latency_us": 2.877551020408163,
+      "total_tests": 100,
+      "successful_tests": 98
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 100,
+      "topology": "ba",
+      "success_rate": 1.0,
+      "avg_hops": 4.84,
+      "avg_latency_us": 0.33,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 100,
+      "topology": "ba",
+      "success_rate": 1.0,
+      "avg_hops": 1.32,
+      "avg_latency_us": 12.21,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "DRFE-R",
+      "network_size": 100,
+      "topology": "random",
+      "success_rate": 0.99,
+      "avg_hops": 4.4646464646464645,
+      "avg_latency_us": 1.5454545454545454,
+      "total_tests": 100,
+      "successful_tests": 99
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 100,
+      "topology": "random",
+      "success_rate": 0.98,
+      "avg_hops": 5.3061224489795915,
+      "avg_latency_us": 0.32653061224489793,
+      "total_tests": 100,
+      "successful_tests": 98
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 100,
+      "topology": "random",
+      "success_rate": 0.99,
+      "avg_hops": 1.3131313131313131,
+      "avg_latency_us": 8.93939393939394,
+      "total_tests": 100,
+      "successful_tests": 99
+    },
+    {
+      "protocol": "DRFE-R",
+      "network_size": 100,
+      "topology": "grid",
+      "success_rate": 0.99,
+      "avg_hops": 8.16161616161616,
+      "avg_latency_us": 2.808080808080808,
+      "total_tests": 100,
+      "successful_tests": 99
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 100,
+      "topology": "grid",
+      "success_rate": 0.99,
+      "avg_hops": 5.05050505050505,
+      "avg_latency_us": 0.25252525252525254,
+      "total_tests": 100,
+      "successful_tests": 99
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 100,
+      "topology": "grid",
+      "success_rate": 0.98,
+      "avg_hops": 1.346938775510204,
+      "avg_latency_us": 11.653061224489797,
+      "total_tests": 100,
+      "successful_tests": 98
+    },
+    {
+      "protocol": "DRFE-R",
+      "network_size": 200,
+      "topology": "ba",
+      "success_rate": 1.0,
+      "avg_hops": 23.67,
+      "avg_latency_us": 8.17,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 200,
+      "topology": "ba",
+      "success_rate": 1.0,
+      "avg_hops": 6.05,
+      "avg_latency_us": 0.61,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 200,
+      "topology": "ba",
+      "success_rate": 0.99,
+      "avg_hops": 1.5858585858585859,
+      "avg_latency_us": 16.474747474747474,
+      "total_tests": 100,
+      "successful_tests": 99
+    },
+    {
+      "protocol": "DRFE-R",
+      "network_size": 200,
+      "topology": "random",
+      "success_rate": 1.0,
+      "avg_hops": 15.52,
+      "avg_latency_us": 4.82,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 200,
+      "topology": "random",
+      "success_rate": 0.98,
+      "avg_hops": 5.744897959183674,
+      "avg_latency_us": 0.9285714285714286,
+      "total_tests": 100,
+      "successful_tests": 98
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 200,
+      "topology": "random",
+      "success_rate": 1.0,
+      "avg_hops": 1.62,
+      "avg_latency_us": 15.9,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "DRFE-R",
+      "network_size": 200,
+      "topology": "grid",
+      "success_rate": 0.99,
+      "avg_hops": 16.242424242424242,
+      "avg_latency_us": 5.757575757575758,
+      "total_tests": 100,
+      "successful_tests": 99
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 200,
+      "topology": "grid",
+      "success_rate": 1.0,
+      "avg_hops": 5.74,
+      "avg_latency_us": 0.58,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 200,
+      "topology": "grid",
+      "success_rate": 0.99,
+      "avg_hops": 1.5353535353535352,
+      "avg_latency_us": 14.686868686868687,
+      "total_tests": 100,
+      "successful_tests": 99
+    },
+    {
+      "protocol": "DRFE-R",
+      "network_size": 300,
+      "topology": "ba",
+      "success_rate": 1.0,
+      "avg_hops": 43.4,
+      "avg_latency_us": 14.77,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 300,
+      "topology": "ba",
+      "success_rate": 1.0,
+      "avg_hops": 5.66,
+      "avg_latency_us": 0.67,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 300,
+      "topology": "ba",
+      "success_rate": 1.0,
+      "avg_hops": 1.74,
+      "avg_latency_us": 21.71,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "DRFE-R",
+      "network_size": 300,
+      "topology": "random",
+      "success_rate": 1.0,
+      "avg_hops": 7.14,
+      "avg_latency_us": 3.01,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 300,
+      "topology": "random",
+      "success_rate": 1.0,
+      "avg_hops": 5.86,
+      "avg_latency_us": 0.71,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 300,
+      "topology": "random",
+      "success_rate": 1.0,
+      "avg_hops": 1.68,
+      "avg_latency_us": 24.45,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "DRFE-R",
+      "network_size": 300,
+      "topology": "grid",
+      "success_rate": 1.0,
+      "avg_hops": 29.55,
+      "avg_latency_us": 11.75,
+      "total_tests": 100,
+      "successful_tests": 100
+    },
+    {
+      "protocol": "Chord",
+      "network_size": 300,
+      "topology": "grid",
+      "success_rate": 0.99,
+      "avg_hops": 5.848484848484849,
+      "avg_latency_us": 0.6464646464646465,
+      "total_tests": 100,
+      "successful_tests": 99
+    },
+    {
+      "protocol": "Kademlia",
+      "network_size": 300,
+      "topology": "grid",
+      "success_rate": 0.99,
+      "avg_hops": 1.6363636363636365,
+      "avg_latency_us": 23.434343434343436,
+      "total_tests": 100,
+      "successful_tests": 99
+    }
+  ]
+}

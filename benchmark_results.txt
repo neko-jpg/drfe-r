@@ -1,0 +1,536 @@
+warning: unused import: `rand::Rng`
+   --> src/network.rs:513:13
+    |
+513 |         use rand::Rng;
+    |             ^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `rand::Rng`
+   --> src/network.rs:542:13
+    |
+542 |         use rand::Rng;
+    |             ^^^^^^^^^
+
+warning: unused import: `rand::Rng`
+   --> src/network.rs:568:13
+    |
+568 |         use rand::Rng;
+    |             ^^^^^^^^^
+
+warning: unused import: `rand::Rng`
+   --> src/network.rs:609:13
+    |
+609 |         use rand::Rng;
+    |             ^^^^^^^^^
+
+warning: unused import: `rand::Rng`
+   --> src/network.rs:633:13
+    |
+633 |         use rand::Rng;
+    |             ^^^^^^^^^
+
+warning: unused import: `rand::Rng`
+   --> src/network.rs:661:13
+    |
+661 |         use rand::Rng;
+    |             ^^^^^^^^^
+
+warning: unused import: `rand::Rng`
+   --> src/network.rs:689:13
+    |
+689 |         use rand::Rng;
+    |             ^^^^^^^^^
+
+warning: function `create_test_controller` is never used
+   --> src/rendezvous.rs:340:8
+    |
+340 |     fn create_test_controller() -> RendezvousController {
+    |        ^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `drfe_r` (lib test) generated 8 warnings (run `cargo fix --lib -p drfe_r --tests` to apply 7 suggestions)
+    Finished `bench` profile [optimized] target(s) in 4.64s
+     Running unittests src/lib.rs (target/release/deps/drfe_r-0fec2f1a9d31e892)
+
+running 121 tests
+test api::tests::test_create_router ... ignored
+test api::tests::test_default_ttl ... ignored
+test api::tests::test_get_node_info_local ... ignored
+test api::tests::test_get_node_info_not_found ... ignored
+test api::tests::test_get_node_neighbors ... ignored
+test api::tests::test_get_topology ... ignored
+test api::tests::test_packet_status_not_found ... ignored
+test api::tests::test_send_packet_request_validation ... ignored
+test audit::tests::test_audit_logger_api_access ... ignored
+test audit::tests::test_audit_logger_authentication ... ignored
+test audit::tests::test_audit_logger_configuration_change ... ignored
+test audit::tests::test_audit_logger_coordinate_update ... ignored
+test audit::tests::test_audit_logger_malicious_packet ... ignored
+test audit::tests::test_audit_logger_node_lifecycle ... ignored
+test audit::tests::test_audit_logger_rate_limit ... ignored
+test audit::tests::test_audit_logger_signature_verification ... ignored
+test audit::tests::test_audit_logger_tls_connection ... ignored
+test audit::tests::test_audit_outcome_display ... ignored
+test audit::tests::test_security_event_type_display ... ignored
+test coordinates::tests::test_anchor_coordinate_deterministic ... ignored
+test coordinates::tests::test_anchor_coordinate_different_ids ... ignored
+test coordinates::tests::test_anchor_near_boundary ... ignored
+test coordinates::tests::test_home_node_selection ... ignored
+test coordinates::tests::test_registration_with_ttl ... ignored
+test greedy_embedding::tests::test_embedding_creates_valid_coordinates ... ignored
+test greedy_embedding::tests::test_embedding_with_cycle ... ignored
+test greedy_embedding::tests::test_greedy_routing_on_tree ... ignored
+test greedy_embedding::tests::test_radius_increases_with_depth ... ignored
+test greedy_embedding::tests::test_root_node_radius_within_expected_range ... ignored
+test grpc::tests::test_create_topology_snapshot ... ignored
+test grpc::tests::test_get_node_status_local ... ignored
+test grpc::tests::test_get_node_status_not_found ... ignored
+test grpc::tests::test_send_packet_ttl_validation ... ignored
+test grpc::tests::test_send_packet_validation ... ignored
+test network::discovery_tests::test_add_and_get_neighbor ... ignored
+test network::discovery_tests::test_configurable_parameters ... ignored
+test network::discovery_tests::test_coordinate_update_broadcast ... ignored
+test network::discovery_tests::test_discovery_service_creation ... ignored
+test network::discovery_tests::test_failure_detection_multiple_neighbors ... ignored
+test network::discovery_tests::test_failure_detection_timing ... ignored
+test network::discovery_tests::test_heartbeat_mechanism ... ignored
+test network::discovery_tests::test_ignore_own_discovery ... ignored
+test network::discovery_tests::test_max_neighbors_limit ... ignored
+test network::discovery_tests::test_neighbor_coordinate_update ... ignored
+test network::discovery_tests::test_neighbor_discovery_process ... ignored
+test network::discovery_tests::test_neighbor_is_alive ... ignored
+test network::discovery_tests::test_remove_neighbor ... ignored
+test network::discovery_tests::test_send_heartbeats_to_all ... ignored
+test network::discovery_tests::test_update_local_coordinate ... ignored
+test network::distributed_node_tests::test_coordinate_update_convergence ... ignored
+test network::distributed_node_tests::test_coordinate_update_no_neighbors ... ignored
+test network::distributed_node_tests::test_coordinate_update_ricci_flow ... ignored
+test network::distributed_node_tests::test_distributed_node_creation ... ignored
+test network::distributed_node_tests::test_handle_neighbor_join ... ignored
+test network::distributed_node_tests::test_handle_neighbor_leave ... ignored
+test network::distributed_node_tests::test_join_with_invalid_bootstrap ... ignored
+test network::distributed_node_tests::test_leave_with_no_neighbors ... ignored
+test network::distributed_node_tests::test_multiple_nodes_join_sequentially ... ignored
+test network::distributed_node_tests::test_neighbor_count ... ignored
+test network::distributed_node_tests::test_node_coordinate_update ... ignored
+test network::distributed_node_tests::test_node_join_empty_network ... ignored
+test network::distributed_node_tests::test_node_join_existing_network ... ignored
+test network::distributed_node_tests::test_node_join_timing ... ignored
+test network::distributed_node_tests::test_node_leave_graceful ... ignored
+test network::distributed_node_tests::test_node_leave_timing ... ignored
+test network::distributed_node_tests::test_node_neighbors ... ignored
+test network::distributed_node_tests::test_proximal_regularization ... ignored
+test network::distributed_node_tests::test_routing_table_update_after_join ... ignored
+test network::distributed_node_tests::test_routing_table_update_after_leave ... ignored
+test network::distributed_node_tests::test_trigger_coordinate_update_conditional ... ignored
+test network::distributed_node_tests::test_trigger_coordinate_update_periodic ... ignored
+test network::network_layer_tests::test_close_connection ... ignored
+test network::network_layer_tests::test_connection_timeout ... ignored
+test network::network_layer_tests::test_network_layer_creation ... ignored
+test network::network_layer_tests::test_tcp_connection_reuse ... ignored
+test network::network_layer_tests::test_tcp_send_receive ... ignored
+test network::network_layer_tests::test_udp_send_receive ... ignored
+test network::tests::test_coordinate_update_packet ... ignored
+test network::tests::test_discovery_packet ... ignored
+test network::tests::test_heartbeat_packet ... ignored
+test network::tests::test_packet_serialization_roundtrip ... ignored
+test network::tests::test_packet_signing_and_verification ... ignored
+test network::tests::test_packet_signing_preserves_data ... ignored
+test network::tests::test_packet_signing_with_invalid_key_length ... ignored
+test network::tests::test_packet_size_limit ... ignored
+test network::tests::test_packet_verification_with_invalid_key_length ... ignored
+test network::tests::test_packet_verification_with_invalid_signature ... ignored
+test network::tests::test_packet_verification_with_tampered_header ... ignored
+test network::tests::test_packet_verification_with_tampered_payload ... ignored
+test network::tests::test_packet_verification_without_signature ... ignored
+test network::tests::test_poincare_point_serialization ... ignored
+test network::tests::test_routing_header_conversion ... ignored
+test network_tls::tests::test_tls_connection_timeout ... ignored
+test network_tls::tests::test_tls_handshake_with_different_certs ... ignored
+test network_tls::tests::test_tls_large_packet ... ignored
+test network_tls::tests::test_tls_multiple_packets ... ignored
+test network_tls::tests::test_tls_network_layer_creation ... ignored
+test network_tls::tests::test_tls_send_receive ... ignored
+test rendezvous::tests::test_anchor_coordinate_computation ... ignored
+test rendezvous::tests::test_registration_message ... ignored
+test rendezvous::tests::test_rendezvous_packet_creation ... ignored
+test ricci::tests::test_all_curvatures ... ignored
+test ricci::tests::test_curvature_sign ... ignored
+test ricci::tests::test_forman_curvature ... ignored
+test ricci::tests::test_ricci_flow_step ... ignored
+test routing::tests::test_gravity_routing_success ... ignored
+test routing::tests::test_routing_self ... ignored
+test routing::tests::test_ttl_expiry ... ignored
+test stability::tests::test_drift_tracker ... ignored
+test stability::tests::test_proximal_regularizer ... ignored
+test stability::tests::test_stability_stats ... ignored
+test tests::test_hyperbolic_distance_origin ... ignored
+test tests::test_hyperbolic_distance_self ... ignored
+test tests::test_hyperbolic_distance_symmetry ... ignored
+test tests::test_mobius_addition_origin ... ignored
+test tests::test_point_creation ... ignored
+test tests::test_polar_coordinates ... ignored
+test tls::tests::test_certificate_pem_roundtrip ... ignored
+test tls::tests::test_generate_self_signed_certificate ... ignored
+test tls::tests::test_multiple_certificates ... ignored
+test tls::tests::test_tls_config_creation ... ignored
+
+test result: ok. 0 passed; 0 failed; 121 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/release/deps/drfe_r-314c93dde271b037)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/simulator.rs (target/release/deps/simulator-3fdf83b1fc6e72d1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running benches/api_throughput.rs (target/release/deps/api_throughput-401d694cd1d13494)
+Gnuplot not found, using plotters backend
+Benchmarking packet_status_serialization/serialize_json
+Benchmarking packet_status_serialization/serialize_json: Warming up for 3.0000 s
+Benchmarking packet_status_serialization/serialize_json: Collecting 100 samples in estimated 5.0000 s (20M iterations)
+Benchmarking packet_status_serialization/serialize_json: Analyzing
+packet_status_serialization/serialize_json
+                        time:   [239.25 ns 242.71 ns 246.39 ns]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+Benchmarking packet_status_serialization/deserialize_json
+Benchmarking packet_status_serialization/deserialize_json: Warming up for 3.0000 s
+Benchmarking packet_status_serialization/deserialize_json: Collecting 100 samples in estimated 5.0011 s (8.0M iterations)
+Benchmarking packet_status_serialization/deserialize_json: Analyzing
+packet_status_serialization/deserialize_json
+                        time:   [620.48 ns 627.75 ns 635.45 ns]
+
+Benchmarking node_info_response/create_response
+Benchmarking node_info_response/create_response: Warming up for 3.0000 s
+Benchmarking node_info_response/create_response: Collecting 100 samples in estimated 5.0001 s (169M iterations)
+Benchmarking node_info_response/create_response: Analyzing
+node_info_response/create_response
+                        time:   [28.140 ns 28.537 ns 28.939 ns]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+Benchmarking node_info_response/serialize_response
+Benchmarking node_info_response/serialize_response: Warming up for 3.0000 s
+Benchmarking node_info_response/serialize_response: Collecting 100 samples in estimated 5.0010 s (20M iterations)
+Benchmarking node_info_response/serialize_response: Analyzing
+node_info_response/serialize_response
+                        time:   [251.88 ns 253.99 ns 256.16 ns]
+Found 5 outliers among 100 measurements (5.00%)
+  5 (5.00%) high mild
+
+Benchmarking topology_response/create_topology/10
+Benchmarking topology_response/create_topology/10: Warming up for 3.0000 s
+Benchmarking topology_response/create_topology/10: Collecting 100 samples in estimated 5.0029 s (3.9M iterations)
+Benchmarking topology_response/create_topology/10: Analyzing
+topology_response/create_topology/10
+                        time:   [1.2564 µs 1.2689 µs 1.2822 µs]
+                        thrpt:  [7.7990 Melem/s 7.8810 Melem/s 7.9594 Melem/s]
+Benchmarking topology_response/create_topology/50
+Benchmarking topology_response/create_topology/50: Warming up for 3.0000 s
+Benchmarking topology_response/create_topology/50: Collecting 100 samples in estimated 5.0061 s (656k iterations)
+Benchmarking topology_response/create_topology/50: Analyzing
+topology_response/create_topology/50
+                        time:   [7.2998 µs 7.3748 µs 7.4535 µs]
+                        thrpt:  [6.7082 Melem/s 6.7799 Melem/s 6.8495 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking topology_response/create_topology/100
+Benchmarking topology_response/create_topology/100: Warming up for 3.0000 s
+Benchmarking topology_response/create_topology/100: Collecting 100 samples in estimated 5.0277 s (323k iterations)
+Benchmarking topology_response/create_topology/100: Analyzing
+topology_response/create_topology/100
+                        time:   [14.961 µs 15.288 µs 15.688 µs]
+                        thrpt:  [6.3742 Melem/s 6.5412 Melem/s 6.6839 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  2 (2.00%) high mild
+  9 (9.00%) high severe
+Benchmarking topology_response/create_topology/500
+Benchmarking topology_response/create_topology/500: Warming up for 3.0000 s
+Benchmarking topology_response/create_topology/500: Collecting 100 samples in estimated 5.2163 s (71k iterations)
+Benchmarking topology_response/create_topology/500: Analyzing
+topology_response/create_topology/500
+                        time:   [74.437 µs 75.353 µs 76.297 µs]
+                        thrpt:  [6.5533 Melem/s 6.6355 Melem/s 6.7171 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+
+Benchmarking packet_tracker/insert_packet
+Benchmarking packet_tracker/insert_packet: Warming up for 3.0000 s
+Benchmarking packet_tracker/insert_packet: Collecting 100 samples in estimated 5.0041 s (2.9M iterations)
+Benchmarking packet_tracker/insert_packet: Analyzing
+packet_tracker/insert_packet
+                        time:   [529.31 ns 557.34 ns 590.52 ns]
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking packet_tracker/lookup_packet
+Benchmarking packet_tracker/lookup_packet: Warming up for 3.0000 s
+Benchmarking packet_tracker/lookup_packet: Collecting 100 samples in estimated 5.0002 s (41M iterations)
+Benchmarking packet_tracker/lookup_packet: Analyzing
+packet_tracker/lookup_packet
+                        time:   [128.62 ns 131.99 ns 135.44 ns]
+Found 7 outliers among 100 measurements (7.00%)
+  6 (6.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking rate_limiter/check_rate_limit
+Benchmarking rate_limiter/check_rate_limit: Warming up for 3.0000 s
+Benchmarking rate_limiter/check_rate_limit: Collecting 100 samples in estimated 5.0001 s (88M iterations)
+Benchmarking rate_limiter/check_rate_limit: Analyzing
+rate_limiter/check_rate_limit
+                        time:   [55.800 ns 56.472 ns 57.153 ns]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+Benchmarking rate_limiter/check_multiple_clients
+Benchmarking rate_limiter/check_multiple_clients: Warming up for 3.0000 s
+Benchmarking rate_limiter/check_multiple_clients: Collecting 100 samples in estimated 5.0008 s (6.2M iterations)
+Benchmarking rate_limiter/check_multiple_clients: Analyzing
+rate_limiter/check_multiple_clients
+                        time:   [754.82 ns 777.27 ns 802.64 ns]
+Found 9 outliers among 100 measurements (9.00%)
+  5 (5.00%) high mild
+  4 (4.00%) high severe
+
+Benchmarking request_validation/validate_send_packet
+Benchmarking request_validation/validate_send_packet: Warming up for 3.0000 s
+Benchmarking request_validation/validate_send_packet: Collecting 100 samples in estimated 5.0000 s (17B iterations)
+Benchmarking request_validation/validate_send_packet: Analyzing
+request_validation/validate_send_packet
+                        time:   [290.01 ps 292.34 ps 294.97 ps]
+
+Benchmarking concurrent_tracking/concurrent_inserts/1
+Benchmarking concurrent_tracking/concurrent_inserts/1: Warming up for 3.0000 s
+Benchmarking concurrent_tracking/concurrent_inserts/1: Collecting 100 samples in estimated 5.1799 s (101k iterations)
+Benchmarking concurrent_tracking/concurrent_inserts/1: Analyzing
+concurrent_tracking/concurrent_inserts/1
+                        time:   [51.502 µs 51.808 µs 52.142 µs]
+                        thrpt:  [19.178 Kelem/s 19.302 Kelem/s 19.417 Kelem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+Benchmarking concurrent_tracking/concurrent_inserts/5
+Benchmarking concurrent_tracking/concurrent_inserts/5: Warming up for 3.0000 s
+Benchmarking concurrent_tracking/concurrent_inserts/5: Collecting 100 samples in estimated 5.1564 s (121k iterations)
+Benchmarking concurrent_tracking/concurrent_inserts/5: Analyzing
+concurrent_tracking/concurrent_inserts/5
+                        time:   [41.729 µs 42.058 µs 42.400 µs]
+                        thrpt:  [117.92 Kelem/s 118.88 Kelem/s 119.82 Kelem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking concurrent_tracking/concurrent_inserts/10
+Benchmarking concurrent_tracking/concurrent_inserts/10: Warming up for 3.0000 s
+Benchmarking concurrent_tracking/concurrent_inserts/10: Collecting 100 samples in estimated 5.1714 s (111k iterations)
+Benchmarking concurrent_tracking/concurrent_inserts/10: Analyzing
+concurrent_tracking/concurrent_inserts/10
+                        time:   [42.837 µs 43.608 µs 44.528 µs]
+                        thrpt:  [224.58 Kelem/s 229.32 Kelem/s 233.44 Kelem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+Benchmarking concurrent_tracking/concurrent_inserts/20
+Benchmarking concurrent_tracking/concurrent_inserts/20: Warming up for 3.0000 s
+Benchmarking concurrent_tracking/concurrent_inserts/20: Collecting 100 samples in estimated 5.1124 s (86k iterations)
+Benchmarking concurrent_tracking/concurrent_inserts/20: Analyzing
+concurrent_tracking/concurrent_inserts/20
+                        time:   [59.838 µs 60.554 µs 61.191 µs]
+                        thrpt:  [326.84 Kelem/s 330.29 Kelem/s 334.23 Kelem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+
+     Running benches/coordinate_updates.rs (target/release/deps/coordinate_updates-a676199de0d35084)
+Gnuplot not found, using plotters backend
+Benchmarking initial_embedding/compute_embedding/50
+Benchmarking initial_embedding/compute_embedding/50: Warming up for 3.0000 s
+Benchmarking initial_embedding/compute_embedding/50: Collecting 100 samples in estimated 5.0989 s (66k iterations)
+Benchmarking initial_embedding/compute_embedding/50: Analyzing
+initial_embedding/compute_embedding/50
+                        time:   [77.734 µs 78.628 µs 79.536 µs]
+                        thrpt:  [628.64 Kelem/s 635.91 Kelem/s 643.22 Kelem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+Benchmarking initial_embedding/compute_embedding/100
+Benchmarking initial_embedding/compute_embedding/100: Warming up for 3.0000 s
+Benchmarking initial_embedding/compute_embedding/100: Collecting 100 samples in estimated 5.1771 s (30k iterations)
+Benchmarking initial_embedding/compute_embedding/100: Analyzing
+initial_embedding/compute_embedding/100
+                        time:   [168.92 µs 170.96 µs 173.01 µs]
+                        thrpt:  [578.00 Kelem/s 584.93 Kelem/s 591.98 Kelem/s]
+Benchmarking initial_embedding/compute_embedding/200
+Benchmarking initial_embedding/compute_embedding/200: Warming up for 3.0000 s
+Benchmarking initial_embedding/compute_embedding/200: Collecting 100 samples in estimated 5.3652 s (15k iterations)
+Benchmarking initial_embedding/compute_embedding/200: Analyzing
+initial_embedding/compute_embedding/200
+                        time:   [375.90 µs 385.22 µs 395.77 µs]
+                        thrpt:  [505.34 Kelem/s 519.18 Kelem/s 532.06 Kelem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking initial_embedding/compute_embedding/500
+Benchmarking initial_embedding/compute_embedding/500: Warming up for 3.0000 s
+Benchmarking initial_embedding/compute_embedding/500: Collecting 100 samples in estimated 9.9974 s (10k iterations)
+Benchmarking initial_embedding/compute_embedding/500: Analyzing
+initial_embedding/compute_embedding/500
+                        time:   [898.94 µs 916.09 µs 937.27 µs]
+                        thrpt:  [533.46 Kelem/s 545.80 Kelem/s 556.21 Kelem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+
+Benchmarking coordinate_refinement/refine_step/50
+Benchmarking coordinate_refinement/refine_step/50: Warming up for 3.0000 s
+Benchmarking coordinate_refinement/refine_step/50: Collecting 100 samples in estimated 5.0358 s (252k iterations)
+Benchmarking coordinate_refinement/refine_step/50: Analyzing
+coordinate_refinement/refine_step/50
+                        time:   [19.558 µs 19.751 µs 19.972 µs]
+                        thrpt:  [7.1601 Melem/s 7.2400 Melem/s 7.3117 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking coordinate_refinement/refine_step/100
+Benchmarking coordinate_refinement/refine_step/100: Warming up for 3.0000 s
+Benchmarking coordinate_refinement/refine_step/100: Collecting 100 samples in estimated 5.1897 s (131k iterations)
+Benchmarking coordinate_refinement/refine_step/100: Analyzing
+coordinate_refinement/refine_step/100
+                        time:   [39.728 µs 40.058 µs 40.399 µs]
+                        thrpt:  [7.2280 Melem/s 7.2895 Melem/s 7.3500 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+Benchmarking coordinate_refinement/refine_step/200
+Benchmarking coordinate_refinement/refine_step/200: Warming up for 3.0000 s
+Benchmarking coordinate_refinement/refine_step/200: Collecting 100 samples in estimated 5.2739 s (66k iterations)
+Benchmarking coordinate_refinement/refine_step/200: Analyzing
+coordinate_refinement/refine_step/200
+                        time:   [79.405 µs 79.762 µs 80.153 µs]
+                        thrpt:  [7.4108 Melem/s 7.4471 Melem/s 7.4806 Melem/s]
+
+Benchmarking topology_change/add_node_and_update
+Benchmarking topology_change/add_node_and_update: Warming up for 3.0000 s
+Benchmarking topology_change/add_node_and_update: Collecting 100 samples in estimated 5.8034 s (20k iterations)
+Benchmarking topology_change/add_node_and_update: Analyzing
+topology_change/add_node_and_update
+                        time:   [287.84 µs 291.82 µs 296.26 µs]
+Found 4 outliers among 100 measurements (4.00%)
+  2 (2.00%) high mild
+  2 (2.00%) high severe
+
+Benchmarking refinement_convergence/converge_10_steps
+Benchmarking refinement_convergence/converge_10_steps: Warming up for 3.0000 s
+Benchmarking refinement_convergence/converge_10_steps: Collecting 100 samples in estimated 5.4546 s (15k iterations)
+Benchmarking refinement_convergence/converge_10_steps: Analyzing
+refinement_convergence/converge_10_steps
+                        time:   [361.05 µs 363.38 µs 365.86 µs]
+
+Benchmarking coordinate_memory/allocate_coords/100
+Benchmarking coordinate_memory/allocate_coords/100: Warming up for 3.0000 s
+Benchmarking coordinate_memory/allocate_coords/100: Collecting 100 samples in estimated 5.0040 s (4.1M iterations)
+Benchmarking coordinate_memory/allocate_coords/100: Analyzing
+coordinate_memory/allocate_coords/100
+                        time:   [1.2015 µs 1.2124 µs 1.2234 µs]
+                        thrpt:  [81.737 Melem/s 82.480 Melem/s 83.229 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+Benchmarking coordinate_memory/allocate_coords/500
+Benchmarking coordinate_memory/allocate_coords/500: Warming up for 3.0000 s
+Benchmarking coordinate_memory/allocate_coords/500: Collecting 100 samples in estimated 5.0037 s (843k iterations)
+Benchmarking coordinate_memory/allocate_coords/500: Analyzing
+coordinate_memory/allocate_coords/500
+                        time:   [5.9722 µs 6.0678 µs 6.1644 µs]
+                        thrpt:  [81.111 Melem/s 82.402 Melem/s 83.721 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  5 (5.00%) high mild
+Benchmarking coordinate_memory/allocate_coords/1000
+Benchmarking coordinate_memory/allocate_coords/1000: Warming up for 3.0000 s
+Benchmarking coordinate_memory/allocate_coords/1000: Collecting 100 samples in estimated 5.0419 s (429k iterations)
+Benchmarking coordinate_memory/allocate_coords/1000: Analyzing
+coordinate_memory/allocate_coords/1000
+                        time:   [11.631 µs 11.726 µs 11.822 µs]
+                        thrpt:  [84.585 Melem/s 85.279 Melem/s 85.976 Melem/s]
+Benchmarking coordinate_memory/allocate_coords/5000
+Benchmarking coordinate_memory/allocate_coords/5000: Warming up for 3.0000 s
+Benchmarking coordinate_memory/allocate_coords/5000: Collecting 100 samples in estimated 5.1233 s (86k iterations)
+Benchmarking coordinate_memory/allocate_coords/5000: Analyzing
+coordinate_memory/allocate_coords/5000
+                        time:   [58.856 µs 59.604 µs 60.408 µs]
+                        thrpt:  [82.770 Melem/s 83.887 Melem/s 84.952 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+
+     Running benches/routing_latency.rs (target/release/deps/routing_latency-7b85213e6bc22792)
+Gnuplot not found, using plotters backend
+Benchmarking routing_latency/ba_network/50
+Benchmarking routing_latency/ba_network/50: Warming up for 3.0000 s
+Benchmarking routing_latency/ba_network/50: Collecting 100 samples in estimated 5.0049 s (2.5M iterations)
+Benchmarking routing_latency/ba_network/50: Analyzing
+routing_latency/ba_network/50
+                        time:   [2.0054 µs 2.0307 µs 2.0620 µs]
+                        thrpt:  [484.98 Kelem/s 492.43 Kelem/s 498.65 Kelem/s]
+Found 13 outliers among 100 measurements (13.00%)
+  6 (6.00%) high mild
+  7 (7.00%) high severe
+Benchmarking routing_latency/ba_network/100
+Benchmarking routing_latency/ba_network/100: Warming up for 3.0000 s
+Benchmarking routing_latency/ba_network/100: Collecting 100 samples in estimated 5.0127 s (1.7M iterations)
+Benchmarking routing_latency/ba_network/100: Analyzing
+routing_latency/ba_network/100
+                        time:   [3.0466 µs 3.0693 µs 3.0930 µs]
+                        thrpt:  [323.31 Kelem/s 325.81 Kelem/s 328.24 Kelem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) high mild
+  4 (4.00%) high severe
+Benchmarking routing_latency/ba_network/200
+Benchmarking routing_latency/ba_network/200: Warming up for 3.0000 s
+Benchmarking routing_latency/ba_network/200: Collecting 100 samples in estimated 5.0151 s (1.0M iterations)
+Benchmarking routing_latency/ba_network/200: Analyzing
+routing_latency/ba_network/200
+                        time:   [4.9138 µs 4.9584 µs 5.0042 µs]
+                        thrpt:  [199.83 Kelem/s 201.68 Kelem/s 203.51 Kelem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking routing_latency/ba_network/500
+Benchmarking routing_latency/ba_network/500: Warming up for 3.0000 s
+Benchmarking routing_latency/ba_network/500: Collecting 100 samples in estimated 5.0468 s (439k iterations)
+Benchmarking routing_latency/ba_network/500: Analyzing
+routing_latency/ba_network/500
+                        time:   [11.151 µs 11.238 µs 11.326 µs]
+                        thrpt:  [88.294 Kelem/s 88.986 Kelem/s 89.675 Kelem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+
+Benchmarking routing_topologies/ba_topology
+Benchmarking routing_topologies/ba_topology: Warming up for 3.0000 s
+Benchmarking routing_topologies/ba_topology: Collecting 100 samples in estimated 5.0127 s (1.6M iterations)
+Benchmarking routing_topologies/ba_topology: Analyzing
+routing_topologies/ba_topology
+                        time:   [3.0941 µs 3.1111 µs 3.1289 µs]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+Benchmarking routing_topologies/grid_topology
+Benchmarking routing_topologies/grid_topology: Warming up for 3.0000 s
+Benchmarking routing_topologies/grid_topology: Collecting 100 samples in estimated 5.0026 s (924k iterations)
+Benchmarking routing_topologies/grid_topology: Analyzing
+routing_topologies/grid_topology
+                        time:   [5.3559 µs 5.3969 µs 5.4370 µs]
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking hop_count/average_hops
+Benchmarking hop_count/average_hops: Warming up for 3.0000 s
+Benchmarking hop_count/average_hops: Collecting 100 samples in estimated 5.0142 s (995k iterations)
+Benchmarking hop_count/average_hops: Analyzing
+hop_count/average_hops  time:   [4.8172 µs 4.8785 µs 4.9527 µs]
+Found 4 outliers among 100 measurements (4.00%)
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+

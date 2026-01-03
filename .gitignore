@@ -1,14 +1,15 @@
-# Rust build artifacts
+# Rust
 /target/
+Cargo.lock
 
-# Frontend build artifacts
-/frontend/node_modules/
-/frontend/dist/
-/frontend/.vite/
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
 
 # IDE
-.idea/
 .vscode/
+.idea/
 *.swp
 *.swo
 
@@ -16,21 +17,30 @@
 .DS_Store
 Thumbs.db
 
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
 # Logs
 *.log
 
-# Kiro IDE
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test output (keep paper_data, but ignore large generated files)
+# paper_data/ablation/ablation_results.json  # Keep this - important for paper
+
+# Archive (old experimental data)
+# archive/  # Keep for now
+
+# Kiro specs (project management)
 .kiro/
-
-# Experimental raw data (keep summaries, exclude large JSON)
-topology_experiments.json
-topology_experiments_n*.json
-scalability_results.json
-scalability_test.json
-baseline_comparison.json
-chat_scale_results.json
-benchmark_results.txt
-
-# Python cache
-__pycache__/
-*.pyc

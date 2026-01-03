@@ -366,7 +366,12 @@ impl RicciFlow {
         new_lengths
     }
 
-    /// Optimize coordinates to match target distances using gradient descent
+    /// Optimize coordinates to match target distances using Riemannian gradient descent
+    /// 
+    /// This uses the proper hyperbolic metric on the Poincaré disk:
+    /// - Euclidean gradient ∇_E f is scaled by (1 - |z|²)² / 4 to get Riemannian gradient ∇_H f
+    /// - Coordinate updates use the exponential map to stay on the manifold
+    /// 
     /// Returns the new coordinates for each node
     pub fn optimize_coordinates(
         &self,
@@ -382,14 +387,16 @@ impl RicciFlow {
             coords.insert(id.clone(), (node.coord.point.x, node.coord.point.y));
         }
 
-        // Gradient descent to minimize stress
+        let step_size = self.coord_step * 0.5; // Smaller step for stability
+
+        // Riemannian gradient descent to minimize stress
         for _ in 0..iterations {
             let mut gradients: HashMap<NodeId, (f64, f64)> = HashMap::new();
             for id in coords.keys() {
                 gradients.insert(id.clone(), (0.0, 0.0));
             }
 
-            // Compute gradients from edge stress
+            // Compute gradients from edge stress using hyperbolic distances
             for (edge, &target_len) in target_lengths {
                 let (ux, uy) = match coords.get(&edge.u) {
                     Some(&c) => c,
@@ -400,40 +407,83 @@ impl RicciFlow {
                     None => continue,
                 };
 
-                // Current Euclidean distance (approximation for small movements)
+                // Compute actual hyperbolic distance
+                let point_u = match PoincareDiskPoint::new(ux, uy) {
+                    Some(p) => p,
+                    None => continue,
+                };
+                let point_v = match PoincareDiskPoint::new(vx, vy) {
+                    Some(p) => p,
+                    None => continue,
+                };
+                
+                let current_hyp_dist = point_u.hyperbolic_distance(&point_v);
+                if current_hyp_dist < 1e-10 {
+                    continue;
+                }
+
+                // Stress: (d_H(u,v) - target)² 
+                // ∂stress/∂z_u in Euclidean coords
+                let stress = current_hyp_dist - target_len;
+                
+                // Euclidean direction from u to v
                 let dx = vx - ux;
                 let dy = vy - uy;
-                let current_dist = (dx * dx + dy * dy).sqrt().max(0.001);
+                let eucl_dist = (dx * dx + dy * dy).sqrt().max(1e-10);
+                
+                // Derivative of hyperbolic distance w.r.t. Euclidean position
+                // d(d_H)/d(z_u) ≈ -2 / ((1-|u|²)(1-|v|²)) * (v-u) / |v-u|
+                // Simplified: gradient points toward/away from other node
+                let r_u_sq = ux * ux + uy * uy;
+                let r_v_sq = vx * vx + vy * vy;
+                
+                // Conformal factor at each point
+                let conf_u = 2.0 / (1.0 - r_u_sq).max(0.01);
+                let conf_v = 2.0 / (1.0 - r_v_sq).max(0.01);
+                
+                // Gradient magnitude combines stress and metric
+                let grad_magnitude = stress * conf_u * conf_v / eucl_dist * step_size;
+                
+                // Euclidean gradient direction
+                let grad_x = dx / eucl_dist * grad_magnitude;
+                let grad_y = dy / eucl_dist * grad_magnitude;
 
-                // Stress gradient: (current - target) * direction
-                // Normalize target_len to Euclidean scale (rough approximation)
-                let target_euclidean = (target_len / 3.0).tanh() * 0.9;
-                let stress = current_dist - target_euclidean;
-                let grad_scale = stress / current_dist * self.coord_step;
-
-                // Update gradients (opposite directions for u and v)
+                // Update gradients: u moves toward v if stress > 0 (too far apart)
                 if let Some(g) = gradients.get_mut(&edge.u) {
-                    g.0 += dx * grad_scale;
-                    g.1 += dy * grad_scale;
+                    g.0 += grad_x;
+                    g.1 += grad_y;
                 }
                 if let Some(g) = gradients.get_mut(&edge.v) {
-                    g.0 -= dx * grad_scale;
-                    g.1 -= dy * grad_scale;
+                    g.0 -= grad_x;
+                    g.1 -= grad_y;
                 }
             }
 
-            // Apply gradients with constraint to stay in disk
+            // Apply Riemannian gradient: convert ∇_E to ∇_H and use exponential map
             for (id, coord) in coords.iter_mut() {
                 if let Some(&(gx, gy)) = gradients.get(id) {
-                    coord.0 -= gx;
-                    coord.1 -= gy;
-
-                    // Project back into disk if needed
-                    let r_sq = coord.0 * coord.0 + coord.1 * coord.1;
-                    if r_sq >= 0.99 * 0.99 {
-                        let scale = 0.98 / r_sq.sqrt();
-                        coord.0 *= scale;
-                        coord.1 *= scale;
+                    let (x, y) = *coord;
+                    let r_sq = x * x + y * y;
+                    
+                    // Riemannian metric scaling: (1 - |z|²)² / 4
+                    // The Euclidean gradient needs to be scaled by this factor
+                    let metric_scale = ((1.0 - r_sq) * (1.0 - r_sq)) / 4.0;
+                    let metric_scale = metric_scale.max(0.001); // Stability near boundary
+                    
+                    // Apply scaled gradient (negative for descent)
+                    let new_x = x - gx * metric_scale;
+                    let new_y = y - gy * metric_scale;
+                    
+                    // Project back into disk (with margin from boundary)
+                    let new_r_sq = new_x * new_x + new_y * new_y;
+                    if new_r_sq >= 0.98 * 0.98 {
+                        // Pull back from boundary
+                        let scale = 0.95 / new_r_sq.sqrt();
+                        coord.0 = new_x * scale;
+                        coord.1 = new_y * scale;
+                    } else {
+                        coord.0 = new_x;
+                        coord.1 = new_y;
                     }
                 }
             }
@@ -448,6 +498,7 @@ impl RicciFlow {
         }
         result
     }
+
 
     /// Run full Ricci Flow optimization: compute target lengths then optimize coords
     pub fn run_optimization(

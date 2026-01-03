@@ -1,0 +1,21 @@
+{
+  "num_nodes": 50,
+  "num_messages": 200,
+  "successful_deliveries": 200,
+  "failed_deliveries": 0,
+  "success_rate": 1.0,
+  "avg_hops": 2.845,
+  "avg_latency_us": 2.235,
+  "median_hops": 3,
+  "p95_hops": 6,
+  "max_hops": 11,
+  "total_duration_ms": 0,
+  "messages_per_second": 206120.96827386058,
+  "gravity_hops": 486,
+  "pressure_hops": 83,
+  "tree_hops": 0,
+  "gravity_percentage": 85.41300527240774,
+  "num_rooms": 5,
+  "room_message_success_rate": 1.0,
+  "timestamp": "2026-01-02T14:09:27.283779012+00:00"
+}
