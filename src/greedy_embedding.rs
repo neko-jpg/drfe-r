@@ -38,7 +38,7 @@ pub struct PIEConfig {
 impl Default for PIEConfig {
     fn default() -> Self {
         Self {
-            root_radius: 0.1,  // Small but non-zero to avoid singularity at origin
+            root_radius: 0.05,  // Small but non-zero to avoid singularity at origin
             max_radius: 0.99,
             radius_base: 0.25,  // Very steep growth
         }
@@ -158,7 +158,7 @@ impl GreedyEmbedding {
             .ok_or("No nodes in graph")?;
 
         // Build spanning tree
-        let (parent, children, depths) = self.build_spanning_tree(adjacency, &root);
+        let (_parent, children, depths) = self.build_spanning_tree(adjacency, &root);
 
         let max_depth = *depths.values().max().unwrap_or(&1);
 
@@ -445,6 +445,25 @@ mod tests {
         // Leaf nodes should be at larger radii
         let leaf_coord = result.coordinates.get(&NodeId::new("3")).unwrap();
         assert!(leaf_coord.euclidean_norm() > root_coord.euclidean_norm());
+    }
+
+    #[test]
+    fn test_root_node_radius_within_expected_range() {
+        let adj = create_test_adjacency();
+        let embedder = GreedyEmbedding::new();
+        let result = embedder.embed(&adj).unwrap();
+
+        // Root node should have radius equal to PIEConfig.root_radius (0.05)
+        let root_coord = result.coordinates.get(&result.root).unwrap();
+        let root_radius = root_coord.euclidean_norm();
+        
+        // Should be very close to the configured root_radius (0.05)
+        assert!(root_radius < 0.1, "Root radius {} should be less than 0.1", root_radius);
+        assert!(root_radius >= 0.0, "Root radius {} should be non-negative", root_radius);
+        
+        // More specifically, should be close to 0.05 (the default root_radius)
+        assert!((root_radius - 0.05).abs() < 0.01, 
+                "Root radius {} should be close to 0.05", root_radius);
     }
 
     #[test]

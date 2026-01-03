@@ -7,10 +7,11 @@
 
 use crate::coordinates::{NodeId, RoutingCoordinate};
 use crate::PoincareDiskPoint;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
 /// Routing mode for the GP algorithm
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RoutingMode {
     /// Greedy mode: forward to neighbor closest to destination
     Gravity,
@@ -44,12 +45,16 @@ pub struct PacketHeader {
     pub mode: RoutingMode,
     /// Time-to-live
     pub ttl: u32,
-    /// Visited nodes (for pressure calculation)
+    /// Visited nodes (for DFS and pressure calculation)
     pub visited: HashSet<NodeId>,
     /// Pressure values accumulated during Pressure mode
     pub pressure_values: HashMap<NodeId, f64>,
     /// リカバリを開始した地点のゴールまでの距離（脱出判定用）
     pub recovery_threshold: f64,
+    /// Pressureモードのステップ数上限（これを使い切ったらTreeへ）
+    pub pressure_budget: u32,
+    /// DFSバックトラック用スタック: 戻るべきノードのパス
+    pub dfs_stack: Vec<NodeId>,
 }
 
 impl PacketHeader {
@@ -68,6 +73,8 @@ impl PacketHeader {
             visited: HashSet::new(),
             pressure_values: HashMap::new(),
             recovery_threshold: f64::INFINITY, // 初期値は無限大
+            pressure_budget: 0,
+            dfs_stack: Vec::new(),
         }
     }
 
@@ -195,8 +202,11 @@ impl GPRouter {
             }
         };
 
-        // 訪問記録
-        packet.record_visit(current_node.clone());
+        // 訪問記録（Treeモード以外で使用）
+        // Treeモードでは別途DFS用のvisitedを管理
+        if packet.mode != RoutingMode::Tree {
+            packet.record_visit(current_node.clone());
+        }
 
         let current_dist = current.coord.point.hyperbolic_distance(&packet.target_coord);
 
@@ -207,48 +217,80 @@ impl GPRouter {
                 if let Some(decision) = self.try_gravity_routing(current, packet) {
                     return decision;
                 } else {
-                    // 局所解に陥った場合 -> Treeモードへ移行
-                    // 「現在の距離」を脱出閾値として記録する
-                    packet.mode = RoutingMode::Tree;
+                    // 局所解に陥った場合 -> Pressureモードへ移行 (First Line of Defense)
+                    packet.mode = RoutingMode::Pressure;
                     packet.recovery_threshold = current_dist;
-                    
-                    // Treeルーティングを試行
-                    if let Some(decision) = self.try_tree_routing(current, packet) {
-                        return decision;
-                    }
-                    
-                    // Treeも失敗した場合はPressureへ
+                    // 予算設定: グラフ規模に応じた探索許容量 (例: N/2)
+                    packet.pressure_budget = (self.node_count() as u32) / 2;
+                    packet.pressure_values.clear(); // 新しい局所解なのでリセット
+
                     return self.pressure_routing(current, packet);
                 }
             },
             RoutingMode::Tree => {
-                // Treeモード (Sticky): 閾値を下回るまでGravity禁止
+                // Treeモード (Sticky): 閾値を下回るまでGreedy厳禁 (Graph DFS)
                 
                 // 脱出判定: 現在位置がリカバリ開始地点より「確実に」ゴールに近いか？
-                if current_dist < packet.recovery_threshold - 1e-6 {
+                // 厳密な不等号 (<) を使用。
+                if current_dist < packet.recovery_threshold {
                     // 脱出成功 -> Gravityモードへ復帰
                     packet.mode = RoutingMode::Gravity;
                     packet.recovery_threshold = f64::INFINITY;
+                    packet.dfs_stack.clear(); // DFSスタックをクリア
                     
                     // Gravityを試行
                     if let Some(decision) = self.try_gravity_routing(current, packet) {
                         return decision;
                     }
-                    // Gravityが失敗したら再びTreeへ
+                    // Gravityが失敗したら（稀なケースだが）再びTreeへ
                     packet.mode = RoutingMode::Tree;
                     packet.recovery_threshold = current_dist;
                 }
 
-                // 脱出未完了 -> Tree構造に従って強制ルーティング (純粋な探索)
-                if let Some(decision) = self.traverse_tree(current, packet) {
+                // 脱出未完了 -> グラフDFSで強制ルーティング
+                if let Some(decision) = self.traverse_graph_dfs(current, packet) {
                     return decision;
                 }
                 
-                // Tree上でも行き止まりの場合はPressureへ
-                return self.pressure_routing(current, packet);
+                // DFSでも行き止まりの場合は失敗（グラフが非連結）
+                return RoutingDecision::Failed { reason: "Graph is disconnected".to_string() };
             },
             RoutingMode::Pressure => {
-                // Pressureモードのロジック（既存のまま）
+                // Pressureモード: 局所的な罠からの脱出
+                
+                // 1. 脱出判定 (Gravityへの復帰)
+                if current_dist < packet.recovery_threshold {
+                    packet.mode = RoutingMode::Gravity;
+                    packet.recovery_threshold = f64::INFINITY;
+                    packet.pressure_budget = 0;
+                    
+                    if let Some(decision) = self.try_gravity_routing(current, packet) {
+                        return decision;
+                    }
+                    // まさかの失敗ならPressure継続
+                    packet.mode = RoutingMode::Pressure;
+                    packet.recovery_threshold = current_dist;
+                }
+
+                // 2. 予算チェック (Treeへの最終フォールバック)
+                if packet.pressure_budget == 0 {
+                    packet.mode = RoutingMode::Tree;
+                    // Recovery Thresholdはそのまま（Gravity復帰基準は変わらない）
+                    // DFSスタックを初期化（現在位置から開始）
+                    packet.dfs_stack.clear();
+                    // DFS用にvisitedをクリア（新しいDFS探索を開始）
+                    packet.visited.clear();
+                    packet.visited.insert(current_node.clone());
+                    
+                    if let Some(decision) = self.traverse_graph_dfs(current, packet) {
+                        return decision;
+                    }
+                    // DFSもダメなら失敗（グラフが非連結）
+                    return RoutingDecision::Failed { reason: "Graph is disconnected".to_string() };
+                }
+
+                // 3. Pressure実行
+                packet.pressure_budget -= 1;
                 return self.pressure_routing(current, packet);
             }
         }
@@ -281,98 +323,57 @@ impl GPRouter {
         })
     }
 
-    /// Tree Mode: Use spanning tree structure for guaranteed routing
-    /// When Greedy fails, we use the tree structure (parent/children) to route
-    /// Since trees have no cycles, this is guaranteed to reach the destination
-    fn try_tree_routing(
+    /// Graph DFS Traversal: Explore graph systematically for guaranteed delivery
+    /// 
+    /// This implements a proper DFS that guarantees reachability in any connected graph.
+    /// 
+    /// Algorithm:
+    /// 1. Mark current node as visited
+    /// 2. Try any unvisited neighbor (explore deeper)
+    /// 3. If all neighbors visited, backtrack using dfs_stack
+    /// 
+    /// Complexity: O(|V|) hops in the worst case for a connected graph
+    /// 
+    /// Key insight: We use dfs_stack to remember the path we came from,
+    /// allowing proper backtracking without infinite loops.
+    fn traverse_graph_dfs(
         &self,
         current: &RoutingNode,
-        packet: &PacketHeader,
+        packet: &mut PacketHeader,
     ) -> Option<RoutingDecision> {
-        let current_distance = current.coord.point.hyperbolic_distance(&packet.target_coord);
+        // Mark current node as visited (for DFS)
+        packet.visited.insert(current.id.clone());
         
-        let mut best_tree_neighbor: Option<&NodeId> = None;
-        let mut best_distance = current_distance;
-
-        // Check tree parent
-        if let Some(ref parent_id) = current.tree_parent {
-            if let Some(parent) = self.nodes.get(parent_id) {
-                let distance = parent.coord.point.hyperbolic_distance(&packet.target_coord);
-                if distance < best_distance {
-                    best_distance = distance;
-                    best_tree_neighbor = Some(parent_id);
-                }
-            }
-        }
-
-        // Check tree children
-        for child_id in &current.tree_children {
-            if let Some(child) = self.nodes.get(child_id) {
-                let distance = child.coord.point.hyperbolic_distance(&packet.target_coord);
-                if distance < best_distance {
-                    best_distance = distance;
-                    best_tree_neighbor = Some(child_id);
-                }
-            }
-        }
-
-        // If we found a tree neighbor closer to target, use it
-        if let Some(next_hop) = best_tree_neighbor {
-            return Some(RoutingDecision::Forward {
-                next_hop: next_hop.clone(),
-                mode: RoutingMode::Tree,
-            });
-        }
-
-        // If no tree neighbor is geometrically closer:
-        // Try unvisited children first (explore deeper)
-        for child_id in &current.tree_children {
-            if !packet.visited.contains(child_id) {
+        // 1. Try any unvisited neighbor (explore deeper)
+        // Sort neighbors for deterministic behavior
+        let mut neighbors: Vec<&NodeId> = current.neighbors.iter().collect();
+        neighbors.sort_by(|a, b| a.0.cmp(&b.0));
+        
+        for neighbor_id in neighbors {
+            if !packet.visited.contains(neighbor_id) {
+                // Push current node to stack before moving forward
+                packet.dfs_stack.push(current.id.clone());
                 return Some(RoutingDecision::Forward {
-                    next_hop: child_id.clone(),
+                    next_hop: neighbor_id.clone(),
                     mode: RoutingMode::Tree,
                 });
             }
         }
 
-        // Then try parent (even if visited - tree routing may need to backtrack)
-        if let Some(ref parent_id) = current.tree_parent {
+        // 2. All neighbors visited - backtrack using stack
+        if let Some(prev_node) = packet.dfs_stack.pop() {
             return Some(RoutingDecision::Forward {
-                next_hop: parent_id.clone(),
+                next_hop: prev_node,
                 mode: RoutingMode::Tree,
             });
         }
 
+        // Stack is empty and no unvisited neighbors - we've explored everything reachable
+        // This should only happen if the graph is disconnected
         None
     }
 
-    /// Pure Tree Traversal: Explore tree structure without greedy checks
-    /// Used during Sticky Recovery to prevent premature backtracking
-    fn traverse_tree(
-        &self,
-        current: &RoutingNode,
-        packet: &PacketHeader,
-    ) -> Option<RoutingDecision> {
-        // 1. Try unvisited children first (explore deeper)
-        for child_id in &current.tree_children {
-            if !packet.visited.contains(child_id) {
-                return Some(RoutingDecision::Forward {
-                    next_hop: child_id.clone(),
-                    mode: RoutingMode::Tree,
-                });
-            }
-        }
 
-        // 2. Then try parent (backtrack)
-        if let Some(ref parent_id) = current.tree_parent {
-            return Some(RoutingDecision::Forward {
-                next_hop: parent_id.clone(),
-                mode: RoutingMode::Tree,
-            });
-        }
-
-        None
-    }
 
     /// Pressure Mode: Use accumulated pressure to escape local minimum
     fn pressure_routing(&self, current: &RoutingNode, packet: &mut PacketHeader) -> RoutingDecision {

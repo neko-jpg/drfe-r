@@ -1,0 +1,28 @@
+DRFE-R Simulator
+================
+
+Configuration:
+  Nodes:     100
+  Topology:  barabasi-albert
+  Tests:     200
+  Max TTL:   50
+  Seed:      42
+
+Generating network... done (0 ms)
+  Nodes: 100
+  Edges: 294
+
+Running routing simulation... done
+
+=== Simulation Results ===
+Total tests:          200
+Successful:           77
+Failed:               123
+Success rate:         38.50%
+Average hops:         2.45
+Gravity hops:         161
+Pressure hops:        28
+Elapsed time:         4 ms
+
+✗ VERIFICATION ISSUE: 38.5% success rate
+  Check network connectivity or increase TTL

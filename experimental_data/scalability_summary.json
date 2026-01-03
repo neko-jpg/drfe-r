@@ -1,0 +1,66 @@
+{
+  "experiment": "Scalability Analysis",
+  "timestamp": "2026-01-01T13:11:35.348232571+00:00",
+  "network_sizes": [
+    100,
+    300,
+    500,
+    1000,
+    3000,
+    5000
+  ],
+  "num_tests_per_size": 1000,
+  "max_ttl": 200,
+  "seed": 42,
+  "total_tests": 6000,
+  "results_summary": [
+    {
+      "network_size": 100,
+      "success_rate": "100.0%",
+      "avg_hops": "5.29",
+      "stretch_ratio": "2.10",
+      "routing_time_us": "22.0",
+      "memory_mb": "0.010"
+    },
+    {
+      "network_size": 300,
+      "success_rate": "94.5%",
+      "avg_hops": "11.89",
+      "stretch_ratio": "3.94",
+      "routing_time_us": "67.0",
+      "memory_mb": "0.030"
+    },
+    {
+      "network_size": 500,
+      "success_rate": "89.6%",
+      "avg_hops": "17.14",
+      "stretch_ratio": "5.29",
+      "routing_time_us": "113.0",
+      "memory_mb": "0.050"
+    },
+    {
+      "network_size": 1000,
+      "success_rate": "83.0%",
+      "avg_hops": "31.05",
+      "stretch_ratio": "8.93",
+      "routing_time_us": "183.0",
+      "memory_mb": "0.099"
+    },
+    {
+      "network_size": 3000,
+      "success_rate": "56.9%",
+      "avg_hops": "38.55",
+      "stretch_ratio": "10.06",
+      "routing_time_us": "454.0",
+      "memory_mb": "0.298"
+    },
+    {
+      "network_size": 5000,
+      "success_rate": "51.2%",
+      "avg_hops": "42.41",
+      "stretch_ratio": "10.56",
+      "routing_time_us": "1001.0",
+      "memory_mb": "0.496"
+    }
+  ]
+}

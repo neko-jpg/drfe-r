@@ -7,7 +7,6 @@
 //! This hybrid approach achieves O(k) ~ O(1) complexity instead of O(m³).
 
 use crate::coordinates::{NodeId, RoutingCoordinate};
-use crate::PoincareDiskPoint;
 use std::collections::HashMap;
 
 /// Threshold for switching between Sinkhorn and Forman curvature
@@ -496,6 +495,7 @@ impl Default for RicciFlow {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::PoincareDiskPoint;
 
     fn create_test_graph() -> RicciGraph {
         let mut graph = RicciGraph::new();

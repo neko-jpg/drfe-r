@@ -2,18 +2,27 @@
 //!
 //! Core library for hyperbolic geometry operations and distributed routing protocol.
 
+pub mod api;
+pub mod audit;
+pub mod baselines;
+pub mod chat;
 pub mod coordinates;
 pub mod greedy_embedding;
+pub mod grpc;
+pub mod network;
+pub mod network_tls;
 pub mod rendezvous;
 pub mod ricci;
 pub mod routing;
 pub mod stability;
+pub mod tls;
 
+use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;
 
 /// A point in the Poincaré disk model of hyperbolic space.
 /// The disk is the unit disk {z ∈ ℂ : |z| < 1}.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct PoincareDiskPoint {
     /// x coordinate (real part)
     pub x: f64,

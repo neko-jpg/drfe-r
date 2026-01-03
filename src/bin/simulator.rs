@@ -49,6 +49,8 @@ pub struct SimResults {
     pub pressure_hops: u32,
     pub tree_hops: u32,
     pub avg_hops: f64,
+    pub total_optimal_hops: u32,
+    pub avg_stretch: f64,
     pub success_rate: f64,
     pub ttl_failures: usize,
     pub no_path_failures: usize,
@@ -63,6 +65,7 @@ impl std::fmt::Display for SimResults {
         writeln!(f, "Failed:               {}", self.failed_deliveries)?;
         writeln!(f, "Success rate:         {:.2}%", self.success_rate * 100.0)?;
         writeln!(f, "Average hops:         {:.2}", self.avg_hops)?;
+        writeln!(f, "Avg Stretch:          {:.3}", self.avg_stretch)?;
         writeln!(f, "Gravity hops:         {}", self.gravity_hops)?;
         writeln!(f, "Tree hops:            {}", self.tree_hops)?;
         writeln!(f, "Pressure hops:        {}", self.pressure_hops)?;
@@ -235,7 +238,239 @@ fn generate_barabasi_albert_network(config: &SimConfig, m: usize) -> GPRouter {
     router
 }
 
-/// Run routing simulation
+/// Generate Watts-Strogatz small-world network
+fn generate_watts_strogatz_network(config: &SimConfig, k: usize, beta: f64) -> GPRouter {
+    // 1. Create a ring lattice with N nodes and k/2 neighbors on each side
+    // 2. Rewire edges with probability beta
+    let mut rng = StdRng::seed_from_u64(config.seed);
+    let mut adjacency: HashMap<usize, HashSet<usize>> = HashMap::new();
+    
+    // Initialize adjacency
+    for i in 0..config.num_nodes {
+        adjacency.insert(i, HashSet::new());
+    }
+
+    // Build Ring Lattice
+    for i in 0..config.num_nodes {
+        for j in 1..=(k / 2) {
+            let neighbor = (i + j) % config.num_nodes;
+            adjacency.get_mut(&i).unwrap().insert(neighbor);
+            adjacency.get_mut(&neighbor).unwrap().insert(i);
+        }
+    }
+
+    // Rewire edges
+    for i in 0..config.num_nodes {
+        // Iterate only over original forward connections to avoid double counting
+        for j in 1..=(k / 2) {
+            let original_neighbor = (i + j) % config.num_nodes;
+            
+            if rng.gen::<f64>() < beta {
+                // Rewire: remove (i, original_neighbor) and add (i, new_node)
+                // Check if edge exists first (it strictly should in the ring)
+                if adjacency.get(&i).unwrap().contains(&original_neighbor) {
+                    // Remove
+                    adjacency.get_mut(&i).unwrap().remove(&original_neighbor);
+                    adjacency.get_mut(&original_neighbor).unwrap().remove(&i);
+
+                    // Choose new neighbor
+                    // Constraints: not self, not duplicate
+                    let mut new_neighbor = rng.gen_range(0..config.num_nodes);
+                    while new_neighbor == i || adjacency.get(&i).unwrap().contains(&new_neighbor) {
+                        new_neighbor = rng.gen_range(0..config.num_nodes);
+                    }
+
+                    // Add
+                    adjacency.get_mut(&i).unwrap().insert(new_neighbor);
+                    adjacency.get_mut(&new_neighbor).unwrap().insert(i);
+                }
+            }
+        }
+    }
+
+    // Convert to GPRouter
+    build_router_from_adjacency(config, &adjacency)
+}
+
+/// Generate 2D Grid Network
+fn generate_grid_network(config: &SimConfig) -> GPRouter {
+    // Try to make a square grid ~ sqrt(N) x sqrt(N)
+    let width = (config.num_nodes as f64).sqrt().ceil() as usize;
+    let mut adjacency: HashMap<usize, HashSet<usize>> = HashMap::new();
+
+    for i in 0..config.num_nodes {
+        adjacency.insert(i, HashSet::new());
+    }
+
+    for i in 0..config.num_nodes {
+        let x = i % width;
+        let _y = i / width;
+
+        // Right neighbor
+        if x + 1 < width {
+            let neighbor = i + 1;
+            if neighbor < config.num_nodes {
+                adjacency.get_mut(&i).unwrap().insert(neighbor);
+                adjacency.get_mut(&neighbor).unwrap().insert(i);
+            }
+        }
+
+        // Bottom neighbor
+        let neighbor = i + width;
+        if neighbor < config.num_nodes {
+            adjacency.get_mut(&i).unwrap().insert(neighbor);
+            adjacency.get_mut(&neighbor).unwrap().insert(i);
+        }
+    }
+
+    build_router_from_adjacency(config, &adjacency)
+}
+
+/// Calculate shortest path using BFS for metrics
+fn bfs_shortest_path(router: &GPRouter, start: &NodeId, end: &NodeId) -> Option<u32> {
+    let mut visited = HashSet::new();
+    let mut queue = std::collections::VecDeque::new();
+    queue.push_back((start.clone(), 0));
+    visited.insert(start.clone());
+
+    while let Some((current, dist)) = queue.pop_front() {
+        if &current == end {
+            return Some(dist);
+        }
+
+        if let Some(node) = router.get_node(&current) {
+            for neighbor in &node.neighbors {
+                if !visited.contains(neighbor) {
+                    visited.insert(neighbor.clone());
+                    queue.push_back((neighbor.clone(), dist + 1));
+                }
+            }
+        }
+    }
+    None
+}
+
+
+/// Generate Line Network (Worst case for depth)
+fn generate_line_network(config: &SimConfig) -> GPRouter {
+    let mut adjacency: HashMap<usize, HashSet<usize>> = HashMap::new();
+    for i in 0..config.num_nodes {
+        adjacency.insert(i, HashSet::new());
+    }
+
+    for i in 0..config.num_nodes - 1 {
+        adjacency.get_mut(&i).unwrap().insert(i + 1);
+        adjacency.get_mut(&(i + 1)).unwrap().insert(i);
+    }
+
+    build_router_from_adjacency(config, &adjacency)
+}
+
+/// Generate Lollipop Network (Clique + Line tail)
+fn generate_lollipop_network(config: &SimConfig, head_ratio: f64) -> GPRouter {
+    let mut adjacency: HashMap<usize, HashSet<usize>> = HashMap::new();
+    for i in 0..config.num_nodes {
+        adjacency.insert(i, HashSet::new());
+    }
+
+    let head_size = (config.num_nodes as f64 * head_ratio) as usize;
+    let head_size = head_size.max(3).min(config.num_nodes - 1);
+
+    // 1. Clique Head (0 to head_size-1)
+    for i in 0..head_size {
+        for j in (i + 1)..head_size {
+            adjacency.get_mut(&i).unwrap().insert(j);
+            adjacency.get_mut(&j).unwrap().insert(i);
+        }
+    }
+
+    // 2. Line Tail (head_size-1 to N-1)
+    // Connect first node of tail to one node in head
+    // head_size-1 is part of clique. Let's make the tail start from head_size.
+    // Connection point: head_size - 1
+    
+    for i in head_size..config.num_nodes {
+        let prev = i - 1;
+        adjacency.get_mut(&i).unwrap().insert(prev);
+        adjacency.get_mut(&prev).unwrap().insert(i);
+    }
+
+    build_router_from_adjacency(config, &adjacency)
+}
+
+/// Helper to build GPRouter from adjacency list using PIE embedding
+fn build_router_from_adjacency(
+    config: &SimConfig,
+    adjacency_idx: &HashMap<usize, HashSet<usize>>,
+) -> GPRouter {
+    let mut router = GPRouter::new();
+    let nodes: Vec<NodeId> = (0..config.num_nodes)
+        .map(|i| NodeId::new(format!("node_{}", i)))
+        .collect();
+
+    // Prepare for embedding
+    let mut adjacency: HashMap<NodeId, Vec<NodeId>> = HashMap::new();
+    for (&i, neighbors) in adjacency_idx {
+        let neighbor_ids: Vec<NodeId> = neighbors
+            .iter()
+            .map(|&j| nodes[j].clone())
+            .collect();
+        adjacency.insert(nodes[i].clone(), neighbor_ids);
+    }
+
+    // Embed
+    let embedder = GreedyEmbedding::new();
+    // PIE might fail if graph is not connected or other issues, strictly speaking 
+    // it works for any connected graph.
+    // For unconnected random graphs, we might panic. But here we assume generators make connected graphs.
+    // Line/Grid are connected. WS is likely connected if beta is low/k is high.
+    let embedding_result = embedder.embed(&adjacency).unwrap_or_else(|_| {
+        // Fallback or panic
+        panic!("Embedding failed - check graph connectivity");
+    });
+
+    // Build tree parent map
+    let mut tree_parent: HashMap<NodeId, Option<NodeId>> = HashMap::new();
+    tree_parent.insert(embedding_result.root.clone(), None);
+    for (parent_id, children) in &embedding_result.tree_children {
+        for child_id in children {
+            tree_parent.insert(child_id.clone(), Some(parent_id.clone()));
+        }
+    }
+
+    // Create nodes
+    for i in 0..config.num_nodes {
+        let node_id = &nodes[i];
+        let point = embedding_result
+            .coordinates
+            .get(node_id)
+            .copied()
+            .unwrap_or_else(PoincareDiskPoint::origin);
+        let coord = RoutingCoordinate::new(point, 0);
+        let mut routing_node = RoutingNode::new(node_id.clone(), coord);
+        
+        let parent = tree_parent.get(node_id).cloned().flatten();
+        let children = embedding_result
+            .tree_children
+            .get(node_id)
+            .cloned()
+            .unwrap_or_default();
+        routing_node.set_tree_info(parent, children);
+        
+        router.add_node(routing_node);
+    }
+
+    // Add edges
+    for (&i, neighbors) in adjacency_idx {
+        for &j in neighbors {
+            if i < j {
+                router.add_edge(&nodes[i], &nodes[j]);
+            }
+        }
+    }
+
+    router
+}
 fn run_simulation(router: &GPRouter, config: &SimConfig) -> SimResults {
     let mut rng = StdRng::seed_from_u64(config.seed + 1000);
     let node_ids: Vec<NodeId> = (0..config.num_nodes)
@@ -249,6 +484,7 @@ fn run_simulation(router: &GPRouter, config: &SimConfig) -> SimResults {
     let mut gravity_hops = 0u32;
     let mut pressure_hops = 0u32;
     let mut tree_hops = 0u32;
+    let mut total_optimal_hops = 0u32;
     let mut ttl_failures = 0usize;
     let mut no_path_failures = 0usize;
 
@@ -278,6 +514,11 @@ fn run_simulation(router: &GPRouter, config: &SimConfig) -> SimResults {
                 gravity_hops += result.gravity_hops;
                 pressure_hops += result.pressure_hops;
                 tree_hops += result.tree_hops;
+
+                // Calculate optimal hops
+                if let Some(opt) = bfs_shortest_path(router, source, dest) {
+                    total_optimal_hops += opt;
+                }
             } else {
                 failed += 1;
                 if let Some(ref reason) = result.failure_reason {
@@ -301,6 +542,14 @@ fn run_simulation(router: &GPRouter, config: &SimConfig) -> SimResults {
         0.0
     };
 
+
+
+    let avg_stretch = if total_optimal_hops > 0 {
+        total_hops as f64 / total_optimal_hops as f64
+    } else {
+        0.0
+    };
+
     SimResults {
         total_tests: config.num_routing_tests,
         successful_deliveries: successful,
@@ -310,6 +559,8 @@ fn run_simulation(router: &GPRouter, config: &SimConfig) -> SimResults {
         pressure_hops,
         tree_hops,
         avg_hops,
+        total_optimal_hops,
+        avg_stretch,
         success_rate: successful as f64 / config.num_routing_tests as f64,
         ttl_failures,
         no_path_failures,
@@ -338,7 +589,7 @@ fn main() {
             }
             "--topology" | "-t" => {
                 if i + 1 < args.len() {
-                    topology = if args[i + 1] == "random" { "random" } else { "barabasi-albert" };
+                    topology = args[i + 1].as_str();
                     i += 1;
                 }
             }
@@ -374,7 +625,7 @@ fn main() {
                 println!();
                 println!("Options:");
                 println!("  -n, --nodes NUM       Number of nodes (default: 100)");
-                println!("  -t, --topology TYPE   Topology type: random, barabasi-albert (default: barabasi-albert)");
+                println!("  -t, --topology TYPE   Topology type: random, ba, ws, grid, line, lollipop (default: ba)");
                 println!("      --tests NUM       Number of routing tests (default: 100)");
                 println!("      --ttl NUM         Max TTL for routing (default: 50)");
                 println!("      --seed NUM        Random seed (default: 42)");
@@ -401,7 +652,12 @@ fn main() {
     print!("Generating network... ");
     let gen_start = Instant::now();
     let mut router = match topology {
-        "random" => generate_random_network(&config),
+        "random" | "er" => generate_random_network(&config),
+        "ba" | "barabasi-albert" => generate_barabasi_albert_network(&config, 3),
+        "ws" | "watts-strogatz" => generate_watts_strogatz_network(&config, 6, 0.1), // k=6, beta=0.1
+        "grid" => generate_grid_network(&config),
+        "line" => generate_line_network(&config),
+        "lollipop" => generate_lollipop_network(&config, 0.33), // Head is 1/3 of nodes
         _ => generate_barabasi_albert_network(&config, 3),
     };
     println!("done ({} ms)", gen_start.elapsed().as_millis());

@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package routing;
+
+// RoutingService provides gRPC endpoints for DRFE-R routing operations
+service RoutingService {
+  // Send a packet to a destination node
+  rpc SendPacket(SendPacketRequest) returns (SendPacketResponse);
+  
+  // Get the status of a specific node
+  rpc GetNodeStatus(GetNodeStatusRequest) returns (NodeStatus);
+  
+  // Stream topology updates in real-time
+  rpc StreamTopology(TopologyRequest) returns (stream TopologyUpdate);
+}
+
+// Request to send a packet
+message SendPacketRequest {
+  // Destination node ID
+  string destination = 1;
+  
+  // Payload data
+  bytes payload = 2;
+  
+  // Time-to-live (defaults to 64)
+  uint32 ttl = 3;
+}
+
+// Response from sending a packet
+message SendPacketResponse {
+  // Unique packet ID for tracking
+  string packet_id = 1;
+  
+  // Status message
+  string status = 2;
+  
+  // Additional message
+  string message = 3;
+}
+
+// Request to get node status
+message GetNodeStatusRequest {
+  // Node ID to query
+  string node_id = 1;
+}
+
+// Node status information
+message NodeStatus {
+  // Node ID
+  string node_id = 1;
+  
+  // Current hyperbolic coordinate
+  HyperbolicPoint coordinate = 2;
+  
+  // List of neighbor IDs
+  repeated string neighbors = 3;
+  
+  // Uptime in seconds
+  uint64 uptime = 4;
+  
+  // UDP address
+  string udp_address = 5;
+  
+  // TCP address
+  string tcp_address = 6;
+}
+
+// Hyperbolic point in Poincaré disk
+message HyperbolicPoint {
+  // X coordinate
+  double x = 1;
+  
+  // Y coordinate
+  double y = 2;
+  
+  // Euclidean norm (distance from origin)
+  double norm = 3;
+  
+  // Version/timestamp
+  uint64 version = 4;
+}
+
+// Request to stream topology updates
+message TopologyRequest {
+  // Whether to include initial snapshot
+  bool include_snapshot = 1;
+  
+  // Update interval in seconds (0 for all updates)
+  uint32 interval_secs = 2;
+}
+
+// Topology update event
+message TopologyUpdate {
+  // Update type
+  UpdateType update_type = 1;
+  
+  // Timestamp of update
+  uint64 timestamp = 2;
+  
+  // Nodes in the topology (for snapshot or node updates)
+  repeated TopologyNode nodes = 3;
+  
+  // Edges in the topology (for snapshot or edge updates)
+  repeated TopologyEdge edges = 4;
+}
+
+// Type of topology update
+enum UpdateType {
+  // Full topology snapshot
+  SNAPSHOT = 0;
+  
+  // Node added or updated
+  NODE_UPDATE = 1;
+  
+  // Node removed
+  NODE_REMOVED = 2;
+  
+  // Edge added or updated
+  EDGE_UPDATE = 3;
+  
+  // Edge removed
+  EDGE_REMOVED = 4;
+}
+
+// Node in topology
+message TopologyNode {
+  // Node ID
+  string id = 1;
+  
+  // Coordinate
+  HyperbolicPoint coordinate = 2;
+  
+  // Whether this is the local node
+  bool is_local = 3;
+}
+
+// Edge in topology
+message TopologyEdge {
+  // Source node ID
+  string source = 1;
+  
+  // Target node ID
+  string target = 2;
+  
+  // Hyperbolic distance
+  double distance = 3;
+}

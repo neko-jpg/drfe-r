@@ -1,6 +1,36 @@
-/target
-**/*.log
-**/*.txt
-sim_*.md
-*_result*.md
-sticky_test_output.txt
+# Rust build artifacts
+/target/
+
+# Frontend build artifacts
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.vite/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Kiro IDE
+.kiro/
+
+# Experimental raw data (keep summaries, exclude large JSON)
+topology_experiments.json
+topology_experiments_n*.json
+scalability_results.json
+scalability_test.json
+baseline_comparison.json
+chat_scale_results.json
+benchmark_results.txt
+
+# Python cache
+__pycache__/
+*.pyc

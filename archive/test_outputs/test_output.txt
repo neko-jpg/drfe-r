@@ -1,0 +1,79 @@
+warning: unused import: `crate::PoincareDiskPoint`
+  --> src/ricci.rs:10:5
+   |
+10 | use crate::PoincareDiskPoint;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: field `registration_interval` is never read
+  --> src/rendezvous.rs:91:5
+   |
+83 | pub struct RendezvousController {
+   |            -------------------- field in this struct
+...
+91 |     registration_interval: u64,
+   |     ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `drfe_r` (lib) generated 2 warnings (run `cargo fix --lib -p drfe_r` to apply 1 suggestion)
+warning: function `create_test_controller` is never used
+   --> src/rendezvous.rs:339:8
+    |
+339 | ...fn create_test_controller() ...
+    |       ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `drfe_r` (lib test) generated 2 warnings (1 duplicate)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.40s
+     Running unittests src/lib.rs (target/debug/deps/drfe_r-125df64e704b5486)
+
+running 24 tests
+test coordinates::tests::test_anchor_coordinate_deterministic ... ok
+test rendezvous::tests::test_anchor_coordinate_computation ... ok
+test coordinates::tests::test_anchor_coordinate_different_ids ... ok
+test coordinates::tests::test_anchor_near_boundary ... ok
+test rendezvous::tests::test_rendezvous_packet_creation ... ok
+test rendezvous::tests::test_registration_message ... ok
+test coordinates::tests::test_registration_with_ttl ... ok
+test coordinates::tests::test_home_node_selection ... ok
+test ricci::tests::test_curvature_sign ... FAILED
+test routing::tests::test_gravity_routing_success ... ok
+test routing::tests::test_routing_self ... ok
+test ricci::tests::test_forman_curvature ... FAILED
+test routing::tests::test_ttl_expiry ... ok
+test stability::tests::test_drift_tracker ... ok
+test ricci::tests::test_ricci_flow_step ... ok
+test stability::tests::test_stability_stats ... ok
+test tests::test_hyperbolic_distance_origin ... ok
+test stability::tests::test_proximal_regularizer ... ok
+test ricci::tests::test_all_curvatures ... ok
+test tests::test_hyperbolic_distance_self ... ok
+test tests::test_hyperbolic_distance_symmetry ... ok
+test tests::test_mobius_addition_origin ... ok
+test tests::test_point_creation ... ok
+test tests::test_polar_coordinates ... ok
+
+failures:
+
+---- ricci::tests::test_curvature_sign stdout ----
+
+thread 'ricci::tests::test_curvature_sign' (710) panicked at src/ricci.rs:430:9:
+assertion failed: (result.value - 0.0).abs() < 1e-10
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- ricci::tests::test_forman_curvature stdout ----
+
+thread 'ricci::tests::test_forman_curvature' (711) panicked at src/ricci.rs:417:9:
+assertion `left == right` failed
+  left: 0.6478430439782605
+ right: -1.0
+
+
+failures:
+    ricci::tests::test_curvature_sign
+    ricci::tests::test_forman_curvature
+
+test result: FAILED. 22 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

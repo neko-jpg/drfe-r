@@ -88,6 +88,7 @@ pub struct RendezvousController {
     /// Registration TTL (in time units)
     registration_ttl: u64,
     /// Registration interval
+    #[allow(dead_code)]
     registration_interval: u64,
 }
 
@@ -335,31 +336,6 @@ pub enum RendezvousRoutingResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn create_test_controller() -> RendezvousController {
-        let mut controller = RendezvousController::new(1000, 100);
-
-        // Create network
-        let nodes = vec![
-            ("src", -0.3, 0.0),
-            ("mid", 0.0, 0.0),
-            ("home", 0.4, 0.3),  // Will likely be home for some destinations
-            ("dst", 0.5, 0.0),
-        ];
-
-        for (id, x, y) in &nodes {
-            let coord = RoutingCoordinate::new(PoincareDiskPoint::new(*x, *y).unwrap(), 0);
-            controller.add_node(NodeId::new(*id), coord);
-        }
-
-        // Connect nodes
-        controller.add_edge(&NodeId::new("src"), &NodeId::new("mid"));
-        controller.add_edge(&NodeId::new("mid"), &NodeId::new("home"));
-        controller.add_edge(&NodeId::new("mid"), &NodeId::new("dst"));
-        controller.add_edge(&NodeId::new("home"), &NodeId::new("dst"));
-
-        controller
-    }
 
     #[test]
     fn test_registration_message() {

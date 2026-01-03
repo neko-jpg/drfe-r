@@ -1,0 +1,82 @@
+{
+  "generated": "2026-01-02T09:25:01.523517",
+  "files": {
+    "raw_data": {
+      "scalability": {
+        "filename": "scalability_results.json",
+        "size_bytes": 5052,
+        "exists": true
+      },
+      "topology_100": {
+        "filename": "topology_experiments_n100.json",
+        "size_bytes": 2561,
+        "exists": true
+      },
+      "topology_200": {
+        "filename": "topology_experiments_n200.json",
+        "size_bytes": 2591,
+        "exists": true
+      },
+      "topology_300": {
+        "filename": "topology_experiments_n300.json",
+        "size_bytes": 2610,
+        "exists": true
+      },
+      "baseline": {
+        "filename": "baseline_comparison.json",
+        "size_bytes": 8856,
+        "exists": true
+      }
+    },
+    "csv_exports": {
+      "scalability_results.csv": {
+        "path": "experimental_data/scalability_results.csv",
+        "size_bytes": 1449
+      },
+      "topology_results_all.csv": {
+        "path": "experimental_data/topology_results_all.csv",
+        "size_bytes": 2105
+      },
+      "baseline_comparison.csv": {
+        "path": "experimental_data/baseline_comparison.csv",
+        "size_bytes": 1967
+      }
+    },
+    "summaries": {
+      "scalability_summary.json": {
+        "path": "experimental_data/scalability_summary.json",
+        "size_bytes": 1434
+      },
+      "topology_summary.json": {
+        "path": "experimental_data/topology_summary.json",
+        "size_bytes": 2644
+      },
+      "baseline_summary.json": {
+        "path": "experimental_data/baseline_summary.json",
+        "size_bytes": 6679
+      },
+      "master_summary.json": {
+        "path": "experimental_data/master_summary.json",
+        "size_bytes": 12745
+      }
+    },
+    "analysis": {
+      "scalability_experiments_summary.md": {
+        "path": "scalability_experiments_summary.md",
+        "size_bytes": 11772
+      },
+      "topology_experiments_summary.md": {
+        "path": "topology_experiments_summary.md",
+        "size_bytes": 9967
+      },
+      "baseline_comparison_summary.md": {
+        "path": "baseline_comparison_summary.md",
+        "size_bytes": 6590
+      },
+      "benchmark_summary.md": {
+        "path": "benchmark_summary.md",
+        "size_bytes": 5600
+      }
+    }
+  }
+}

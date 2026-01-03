@@ -1,0 +1,62 @@
+   Compiling drfe_r v0.1.0 (/mnt/c/dev/network test)
+warning: unused import: `crate::PoincareDiskPoint`
+  --> src/ricci.rs:10:5
+   |
+10 | use crate::PoincareDiskPoint;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `parent`
+   --> src/greedy_embedding.rs:161:14
+    |
+161 |         let (parent, children, depths) = self.build_spanning_tree(adjacency, &root);
+    |              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_parent`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: field `registration_interval` is never read
+  --> src/rendezvous.rs:91:5
+   |
+83 | pub struct RendezvousController {
+   |            -------------------- field in this struct
+...
+91 |     registration_interval: u64,
+   |     ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `drfe_r` (lib) generated 3 warnings (run `cargo fix --lib -p drfe_r` to apply 2 suggestions)
+    Finished `release` profile [optimized] target(s) in 2.63s
+     Running `target/release/simulator -n 100 --tests 500 --ttl 100`
+DRFE-R Simulator
+================
+
+Configuration:
+  Nodes:     100
+  Topology:  barabasi-albert
+  Tests:     500
+  Max TTL:   100
+  Seed:      42
+  Optimize:  no
+
+Generating network... done (0 ms)
+  Nodes: 100
+  Edges: 294
+
+Running routing simulation... done
+
+=== Simulation Results ===
+Total tests:          500
+Successful:           381
+Failed:               119
+Success rate:         76.20%
+Average hops:         2.79
+Gravity hops:         910
+Pressure hops:        153
+TTL failures:         119
+No path failures:     0
+Elapsed time:         9 ms
+
+✗ VERIFICATION ISSUE: 76.2% success rate
+  Check network connectivity or increase TTL

@@ -1,0 +1,117 @@
+{
+  "BarabasiAlbert": [
+    {
+      "network_size": 100,
+      "success_rate": 0.999,
+      "avg_hops": 5.645645645645645,
+      "stretch_ratio": 2.22397476340694,
+      "num_edges": 294
+    },
+    {
+      "network_size": 200,
+      "success_rate": 0.958,
+      "avg_hops": 7.6941544885177455,
+      "stretch_ratio": 2.66101083032491,
+      "num_edges": 594
+    },
+    {
+      "network_size": 300,
+      "success_rate": 0.924,
+      "avg_hops": 10.273809523809524,
+      "stretch_ratio": 3.414748201438849,
+      "num_edges": 894
+    }
+  ],
+  "WattsStrogatz": [
+    {
+      "network_size": 100,
+      "success_rate": 0.989,
+      "avg_hops": 5.972699696663296,
+      "stretch_ratio": 1.6886792452830188,
+      "num_edges": 300
+    },
+    {
+      "network_size": 200,
+      "success_rate": 1.0,
+      "avg_hops": 7.101,
+      "stretch_ratio": 1.6502440158029281,
+      "num_edges": 600
+    },
+    {
+      "network_size": 300,
+      "success_rate": 0.995,
+      "avg_hops": 11.085427135678392,
+      "stretch_ratio": 2.300792657488527,
+      "num_edges": 900
+    }
+  ],
+  "Grid": [
+    {
+      "network_size": 100,
+      "success_rate": 1.0,
+      "avg_hops": 10.861,
+      "stretch_ratio": 1.593222825289717,
+      "num_edges": 180
+    },
+    {
+      "network_size": 200,
+      "success_rate": 0.925,
+      "avg_hops": 13.69945945945946,
+      "stretch_ratio": 1.4814122048164602,
+      "num_edges": 371
+    },
+    {
+      "network_size": 300,
+      "success_rate": 0.925,
+      "avg_hops": 18.127567567567567,
+      "stretch_ratio": 1.5957365816520745,
+      "num_edges": 565
+    }
+  ],
+  "Random": [
+    {
+      "network_size": 100,
+      "success_rate": 1.0,
+      "avg_hops": 5.046,
+      "stretch_ratio": 1.5734331150608045,
+      "num_edges": 227
+    },
+    {
+      "network_size": 200,
+      "success_rate": 0.966,
+      "avg_hops": 6.635610766045549,
+      "stretch_ratio": 2.587807832054905,
+      "num_edges": 931
+    },
+    {
+      "network_size": 300,
+      "success_rate": 0.925,
+      "avg_hops": 7.486486486486487,
+      "stretch_ratio": 3.103989242492156,
+      "num_edges": 2263
+    }
+  ],
+  "RealWorld": [
+    {
+      "network_size": 100,
+      "success_rate": 0.978,
+      "avg_hops": 15.53476482617587,
+      "stretch_ratio": 2.4073839328157187,
+      "num_edges": 200
+    },
+    {
+      "network_size": 200,
+      "success_rate": 0.981,
+      "avg_hops": 12.523955147808358,
+      "stretch_ratio": 2.212099387828592,
+      "num_edges": 539
+    },
+    {
+      "network_size": 300,
+      "success_rate": 0.934,
+      "avg_hops": 11.485010706638116,
+      "stretch_ratio": 2.191867592970985,
+      "num_edges": 1013
+    }
+  ]
+}

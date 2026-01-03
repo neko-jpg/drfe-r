@@ -1,0 +1,116 @@
+   Compiling proc-macro2 v1.0.104
+   Compiling quote v1.0.42
+   Compiling zerocopy v0.8.31
+   Compiling typenum v1.19.0
+   Compiling getrandom v0.3.4
+   Compiling crossbeam-utils v0.8.21
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling rustix v1.1.3
+   Compiling zmij v1.0.3
+   Compiling num-traits v0.2.19
+   Compiling generic-array v0.14.7
+   Compiling regex-automata v0.4.13
+   Compiling itertools v0.10.5
+   Compiling clap v4.5.53
+   Compiling rand_core v0.9.3
+   Compiling rand v0.9.2
+   Compiling rand_xorshift v0.4.0
+   Compiling crossbeam-epoch v0.9.18
+   Compiling crossbeam-deque v0.8.6
+   Compiling num-complex v0.4.6
+   Compiling plotters v0.3.7
+   Compiling syn v2.0.111
+   Compiling rayon-core v1.13.0
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling criterion-plot v0.5.0
+   Compiling rayon v1.11.0
+   Compiling sha2 v0.10.9
+   Compiling regex v1.12.2
+   Compiling tempfile v3.24.0
+   Compiling rusty-fork v0.3.1
+   Compiling serde_json v1.0.148
+   Compiling zerocopy-derive v0.8.31
+   Compiling serde_derive v1.0.228
+   Compiling ppv-lite86 v0.2.21
+   Compiling half v2.7.1
+   Compiling tinytemplate v1.2.1
+   Compiling ciborium-ll v0.2.2
+   Compiling rand_chacha v0.3.1
+   Compiling rand_chacha v0.9.0
+   Compiling ciborium v0.2.2
+   Compiling proptest v1.9.0
+   Compiling rand v0.8.5
+   Compiling criterion v0.5.1
+   Compiling drfe_r v0.1.0 (/mnt/c/dev/network test)
+warning: unused variable: `parent`
+   --> src/greedy_embedding.rs:161:14
+    |
+161 |         let (parent, children, depths) = self.build_spanning_tree(adjacency, &root);
+    |              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_parent`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `drfe_r` (lib) generated 1 warning (run `cargo fix --lib -p drfe_r` to apply 1 suggestion)
+warning: unused variable: `y`
+   --> src/bin/simulator.rs:307:13
+    |
+307 |         let y = i / width;
+    |             ^ help: if this is intentional, prefix it with an underscore: `_y`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `drfe_r` (bin "simulator") generated 1 warning (run `cargo fix --bin "simulator" -p drfe_r` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 18.36s
+     Running tests/property_tests.rs (target/debug/deps/property_tests-e217ce75f2784bde)
+
+running 8 tests
+test sanity_tests::near_origin_points_have_small_norm ... ok
+test sanity_tests::near_boundary_points_have_large_norm ... ok
+test sanity_tests::generated_points_are_valid ... ok
+test mathematical_properties::prop_mobius_addition_associativity ... FAILED
+test mathematical_properties::prop_mobius_addition_identity ... ok
+test mathematical_properties::prop_distance_symmetry ... ok
+test mathematical_properties::prop_poincare_disk_invariant ... ok
+test mathematical_properties::prop_triangle_inequality ... ok
+
+failures:
+
+---- mathematical_properties::prop_mobius_addition_associativity stdout ----
+proptest: FileFailurePersistence::SourceParallel set, but failed to find lib.rs or main.rs
+proptest: FileFailurePersistence::SourceParallel set, but failed to find lib.rs or main.rs
+proptest: Saving this and future failures in /mnt/c/dev/network test/tests/property_tests.proptest-regressions
+proptest: If this test was run on a CI system, you may wish to add the following line to your copy of the file. (You may need to create it.)
+cc 550cf95462a635090bd8cf020d9bd82e1160556d7675e3a4e9df79510a7343cd
+
+thread 'mathematical_properties::prop_mobius_addition_associativity' (1338) panicked at tests/property_tests.rs:186:5:
+Test failed: Möbius associativity violated: ((0.6657, 0.0000) ⊕ (0.4657, -0.6544)) ⊕ (0.6096, 0.0000) = (0.9674, -0.1942) != (0.6657, 0.0000) ⊕ ((0.4657, -0.6544) ⊕ (0.6096, 0.0000)) = (0.9684, -0.1767) at tests/property_tests.rs:213.
+minimal failing input: (p1, p2, p3) = (
+    PoincareDiskPoint {
+        x: 0.6656512959556962,
+        y: 0.0,
+    },
+    PoincareDiskPoint {
+        x: 0.46574603740638837,
+        y: -0.6543552150820079,
+    },
+    PoincareDiskPoint {
+        x: 0.609591620360794,
+        y: 0.0,
+    },
+)
+	successes: 0
+	local rejects: 0
+	global rejects: 0
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    mathematical_properties::prop_mobius_addition_associativity
+
+test result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `--test property_tests`

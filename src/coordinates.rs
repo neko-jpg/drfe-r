@@ -5,11 +5,12 @@
 //! - Routing Coordinate: Topology-dependent, updated dynamically via Ricci flow
 
 use crate::PoincareDiskPoint;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 
 /// Node identifier (could be IP address, UUID, etc.)
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct NodeId(pub String);
 
 impl NodeId {

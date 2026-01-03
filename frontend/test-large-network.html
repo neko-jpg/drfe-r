@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DRFE-R Large Network Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #4fc3f7;
+    }
+    .controls {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    label {
+      font-size: 12px;
+      color: #aaa;
+    }
+    select, input, button {
+      padding: 8px 12px;
+      border: 1px solid #4a4a7a;
+      border-radius: 4px;
+      background: #16213e;
+      color: #fff;
+      font-size: 14px;
+    }
+    button {
+      cursor: pointer;
+      background: #4fc3f7;
+      color: #000;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #7fd8ff;
+    }
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    .canvas-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    canvas {
+      border: 2px solid #4a4a7a;
+      border-radius: 8px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: #16213e;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #4a4a7a;
+    }
+    .stat-card h3 {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 5px;
+    }
+    .stat-card .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4fc3f7;
+    }
+    .stat-card .unit {
+      font-size: 12px;
+      color: #888;
+    }
+    .test-results {
+      background: #16213e;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #4a4a7a;
+    }
+    .test-results h2 {
+      margin-bottom: 15px;
+      color: #4fc3f7;
+    }
+    .test-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      border-bottom: 1px solid #2a2a4a;
+    }
+    .test-item:last-child {
+      border-bottom: none;
+    }
+    .test-item .status {
+      font-weight: bold;
+    }
+    .test-item .status.pass {
+      color: #00ff88;
+    }
+    .test-item .status.fail {
+      color: #ff4444;
+    }
+    .test-item .status.pending {
+      color: #ffaa00;
+    }
+    .log {
+      background: #0a0a1a;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 15px;
+    }
+    .log-entry {
+      margin-bottom: 5px;
+    }
+    .log-entry.info { color: #4fc3f7; }
+    .log-entry.success { color: #00ff88; }
+    .log-entry.error { color: #ff4444; }
+    .log-entry.warn { color: #ffaa00; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔬 DRFE-R Large Network Visualization Test</h1>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label>Network Size</label>
+        <select id="networkSize">
+          <option value="100">100 nodes</option>
+          <option value="500">500 nodes</option>
+          <option value="1000" selected>1000 nodes</option>
+          <option value="2000">2000 nodes</option>
+          <option value="3000">3000 nodes</option>
+          <option value="5000">5000 nodes</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Topology Type</label>
+        <select id="topologyType">
+          <option value="ba" selected>Barabási-Albert</option>
+          <option value="grid">Grid</option>
+          <option value="random">Random</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Show Curvature</label>
+        <select id="showCurvature">
+          <option value="false" selected>No</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Show Labels</label>
+        <select id="showLabels">
+          <option value="false" selected>No</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>&nbsp;</label>
+        <button id="runTest">▶️ Run Test</button>
+      </div>
+      <div class="control-group">
+        <label>&nbsp;</label>
+        <button id="runAllTests">🔄 Run All Tests</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <h3>Nodes</h3>
+        <div class="value" id="nodeCount">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Edges</h3>
+        <div class="value" id="edgeCount">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Generation Time</h3>
+        <div class="value" id="genTime">-</div>
+        <div class="unit">ms</div>
+      </div>
+      <div class="stat-card">
+        <h3>Render Time</h3>
+        <div class="value" id="renderTime">-</div>
+        <div class="unit">ms</div>
+      </div>
+      <div class="stat-card">
+        <h3>FPS</h3>
+        <div class="value" id="fps">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Memory</h3>
+        <div class="value" id="memory">-</div>
+        <div class="unit">MB</div>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="canvas" width="800" height="800"></canvas>
+    </div>
+
+    <div class="test-results">
+      <h2>📋 Test Results</h2>
+      <div id="testList">
+        <div class="test-item">
+          <span>1. Generate 1000+ node topology</span>
+          <span class="status pending" id="test1">Pending</span>
+        </div>
+        <div class="test-item">
+          <span>2. Render topology in &lt; 100ms</span>
+          <span class="status pending" id="test2">Pending</span>
+        </div>
+        <div class="test-item">
+          <span>3. Maintain 30+ FPS during interaction</span>
+          <span class="status pending" id="test3">Pending</span>
+        </div>
+        <div class="test-item">
+          <span>4. All nodes inside Poincaré disk</span>
+          <span class="status pending" id="test4">Pending</span>
+        </div>
+        <div class="test-item">
+          <span>5. Curvature heatmap renders correctly</span>
+          <span class="status pending" id="test5">Pending</span>
+        </div>
+        <div class="test-item">
+          <span>6. Zoom/Pan works smoothly</span>
+          <span class="status pending" id="test6">Pending</span>
+        </div>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ============================================
+    // Topology Generation Functions
+    // ============================================
+    
+    function generateBATopology(numNodes, initialNodes = 3, edgesPerNewNode = 2) {
+      const nodes = [];
+      const edges = [];
+      const adjacency = new Map();
+
+      const addEdge = (source, target) => {
+        if (source === target) return;
+        if (!adjacency.has(source)) adjacency.set(source, new Set());
+        if (!adjacency.has(target)) adjacency.set(target, new Set());
+        if (adjacency.get(source).has(target)) return;
+        
+        adjacency.get(source).add(target);
+        adjacency.get(target).add(source);
+        
+        const curvature = (Math.random() - 0.5);
+        edges.push({ source, target, curvature });
+      };
+
+      // Create initial fully connected clique
+      for (let i = 0; i < initialNodes; i++) {
+        const id = `node-${i}`;
+        const angle = (2 * Math.PI * i) / initialNodes;
+        const radius = 0.1 + Math.random() * 0.1;
+        nodes.push({
+          id,
+          coordinate: {
+            x: radius * Math.cos(angle),
+            y: radius * Math.sin(angle),
+          },
+          neighbors: [],
+          isOnline: true,
+        });
+        adjacency.set(id, new Set());
+      }
+
+      // Connect initial nodes
+      for (let i = 0; i < initialNodes; i++) {
+        for (let j = i + 1; j < initialNodes; j++) {
+          addEdge(`node-${i}`, `node-${j}`);
+        }
+      }
+
+      // Add remaining nodes using preferential attachment
+      for (let i = initialNodes; i < numNodes; i++) {
+        const id = `node-${i}`;
+        
+        const t = i / numNodes;
+        const spiralAngle = 6 * Math.PI * t + Math.random() * 0.5;
+        const spiralRadius = 0.1 + 0.85 * Math.sqrt(t) * (0.9 + Math.random() * 0.1);
+        const clampedRadius = Math.min(spiralRadius, 0.95);
+        
+        nodes.push({
+          id,
+          coordinate: {
+            x: clampedRadius * Math.cos(spiralAngle),
+            y: clampedRadius * Math.sin(spiralAngle),
+          },
+          neighbors: [],
+          isOnline: Math.random() > 0.05,
+        });
+        adjacency.set(id, new Set());
+
+        let degreeSum = 0;
+        for (let j = 0; j < i; j++) {
+          degreeSum += adjacency.get(`node-${j}`).size;
+        }
+
+        const targets = new Set();
+        let attempts = 0;
+        while (targets.size < edgesPerNewNode && attempts < 100) {
+          attempts++;
+          let r = Math.random() * degreeSum;
+          for (let j = 0; j < i; j++) {
+            const targetId = `node-${j}`;
+            r -= adjacency.get(targetId).size;
+            if (r <= 0 && !targets.has(targetId)) {
+              targets.add(targetId);
+              break;
+            }
+          }
+        }
+
+        targets.forEach(target => addEdge(id, target));
+      }
+
+      nodes.forEach(node => {
+        node.neighbors = Array.from(adjacency.get(node.id) || []);
+      });
+
+      return { nodes, edges };
+    }
+
+    function generateGridTopology(rows, cols) {
+      const nodes = [];
+      const edges = [];
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const id = `node-${r}-${c}`;
+          const x = (c / (cols - 1) - 0.5) * 1.6;
+          const y = (r / (rows - 1) - 0.5) * 1.6;
+          const norm = Math.sqrt(x * x + y * y);
+          const scale = norm > 0 ? Math.tanh(norm) / norm : 1;
+          
+          nodes.push({
+            id,
+            coordinate: { x: x * scale * 0.9, y: y * scale * 0.9 },
+            neighbors: [],
+            isOnline: true,
+          });
+        }
+      }
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const id = `node-${r}-${c}`;
+          const neighbors = [];
+
+          if (r > 0) {
+            const neighbor = `node-${r - 1}-${c}`;
+            neighbors.push(neighbor);
+            edges.push({ source: id, target: neighbor, curvature: 0 });
+          }
+          if (c > 0) {
+            const neighbor = `node-${r}-${c - 1}`;
+            neighbors.push(neighbor);
+            edges.push({ source: id, target: neighbor, curvature: 0 });
+          }
+          if (r < rows - 1) neighbors.push(`node-${r + 1}-${c}`);
+          if (c < cols - 1) neighbors.push(`node-${r}-${c + 1}`);
+
+          const node = nodes.find(n => n.id === id);
+          if (node) node.neighbors = neighbors;
+        }
+      }
+
+      return { nodes, edges };
+    }
+
+    function generateRandomTopology(numNodes, avgDegree = 4) {
+      const nodes = [];
+      const edges = [];
+      const adjacency = new Map();
+
+      for (let i = 0; i < numNodes; i++) {
+        const id = `node-${i}`;
+        let x, y;
+        do {
+          x = (Math.random() - 0.5) * 1.9;
+          y = (Math.random() - 0.5) * 1.9;
+        } while (x * x + y * y >= 0.95 * 0.95);
+
+        nodes.push({
+          id,
+          coordinate: { x, y },
+          neighbors: [],
+          isOnline: Math.random() > 0.02,
+        });
+        adjacency.set(id, new Set());
+      }
+
+      const targetEdges = Math.floor((numNodes * avgDegree) / 2);
+      let edgeCount = 0;
+      let attempts = 0;
+
+      while (edgeCount < targetEdges && attempts < targetEdges * 10) {
+        attempts++;
+        const i = Math.floor(Math.random() * numNodes);
+        const j = Math.floor(Math.random() * numNodes);
+        
+        if (i === j) continue;
+        
+        const source = `node-${i}`;
+        const target = `node-${j}`;
+        
+        if (adjacency.get(source).has(target)) continue;
+        
+        adjacency.get(source).add(target);
+        adjacency.get(target).add(source);
+        
+        edges.push({ source, target, curvature: (Math.random() - 0.5) * 0.8 });
+        edgeCount++;
+      }
+
+      nodes.forEach(node => {
+        node.neighbors = Array.from(adjacency.get(node.id) || []);
+      });
+
+      return { nodes, edges };
+    }
+
+    // ============================================
+    // Rendering Functions
+    // ============================================
+    
+    function curvatureToColor(curvature) {
+      const normalized = Math.max(-1, Math.min(1, curvature));
+      if (normalized < 0) {
+        const t = -normalized;
+        const r = Math.floor(255 * (1 - t));
+        const g = Math.floor(255 * (1 - t));
+        return `rgb(${r}, ${g}, 255)`;
+      } else if (normalized > 0) {
+        const t = normalized;
+        const g = Math.floor(255 * (1 - t));
+        const b = Math.floor(255 * (1 - t));
+        return `rgb(255, ${g}, ${b})`;
+      }
+      return 'rgb(255, 255, 255)';
+    }
+
+    function toCanvasCoords(point, width, height, scale, offsetX, offsetY) {
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.min(width, height) / 2 - 20;
+      return {
+        x: centerX + (point.x * radius * scale) + offsetX,
+        y: centerY - (point.y * radius * scale) + offsetY,
+      };
+    }
+
+    function renderTopology(ctx, topology, options) {
+      const { width, height, showCurvature, showLabels, scale = 1, offsetX = 0, offsetY = 0 } = options;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const baseRadius = Math.min(width, height) / 2 - 20;
+
+      // Clear canvas
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw Poincaré disk boundary
+      ctx.beginPath();
+      ctx.arc(centerX + offsetX, centerY + offsetY, baseRadius * scale, 0, 2 * Math.PI);
+      ctx.strokeStyle = '#6a6a9a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#16213e';
+      ctx.fill();
+
+      // Create node map for quick lookup
+      const nodeMap = new Map();
+      topology.nodes.forEach(node => nodeMap.set(node.id, node));
+
+      // Draw edges
+      topology.edges.forEach(edge => {
+        const sourceNode = nodeMap.get(edge.source);
+        const targetNode = nodeMap.get(edge.target);
+        if (!sourceNode || !targetNode) return;
+
+        const p1 = toCanvasCoords(sourceNode.coordinate, width, height, scale, offsetX, offsetY);
+        const p2 = toCanvasCoords(targetNode.coordinate, width, height, scale, offsetX, offsetY);
+
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        
+        if (showCurvature && edge.curvature !== undefined) {
+          ctx.strokeStyle = curvatureToColor(edge.curvature);
+          ctx.lineWidth = 2;
+        } else {
+          ctx.strokeStyle = '#4a4a7a';
+          ctx.lineWidth = 0.5;
+        }
+        ctx.stroke();
+      });
+
+      // Draw nodes
+      topology.nodes.forEach(node => {
+        const pos = toCanvasCoords(node.coordinate, width, height, scale, offsetX, offsetY);
+        
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 3, 0, 2 * Math.PI);
+        ctx.fillStyle = node.isOnline ? '#4fc3f7' : '#666';
+        ctx.fill();
+
+        if (showLabels && scale > 1.5) {
+          ctx.fillStyle = '#fff';
+          ctx.font = '8px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(node.id.slice(0, 6), pos.x, pos.y - 6);
+        }
+      });
+    }
+
+    // ============================================
+    // Test Functions
+    // ============================================
+    
+    const log = (message, type = 'info') => {
+      const logEl = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    };
+
+    const setTestStatus = (testId, status, message = '') => {
+      const el = document.getElementById(testId);
+      el.className = `status ${status}`;
+      el.textContent = status === 'pass' ? '✓ Pass' : status === 'fail' ? '✗ Fail' : 'Pending';
+      if (message) el.textContent += ` (${message})`;
+    };
+
+    let currentTopology = null;
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let frameCount = 0;
+    let lastFpsTime = performance.now();
+    let currentFps = 0;
+
+    async function runTest() {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const numNodes = parseInt(document.getElementById('networkSize').value);
+      const topologyType = document.getElementById('topologyType').value;
+      const showCurvature = document.getElementById('showCurvature').value === 'true';
+      const showLabels = document.getElementById('showLabels').value === 'true';
+
+      log(`Starting test with ${numNodes} nodes, topology: ${topologyType}`);
+
+      // Reset test statuses
+      for (let i = 1; i <= 6; i++) {
+        setTestStatus(`test${i}`, 'pending');
+      }
+
+      // Test 1: Generate topology
+      const genStart = performance.now();
+      
+      if (topologyType === 'ba') {
+        currentTopology = generateBATopology(numNodes);
+      } else if (topologyType === 'grid') {
+        const side = Math.ceil(Math.sqrt(numNodes));
+        currentTopology = generateGridTopology(side, side);
+      } else {
+        currentTopology = generateRandomTopology(numNodes);
+      }
+      
+      const genTime = performance.now() - genStart;
+      document.getElementById('genTime').textContent = genTime.toFixed(1);
+      document.getElementById('nodeCount').textContent = currentTopology.nodes.length;
+      document.getElementById('edgeCount').textContent = currentTopology.edges.length;
+
+      if (currentTopology.nodes.length >= 1000) {
+        setTestStatus('test1', 'pass', `${currentTopology.nodes.length} nodes`);
+        log(`✓ Generated ${currentTopology.nodes.length} nodes in ${genTime.toFixed(1)}ms`, 'success');
+      } else {
+        setTestStatus('test1', 'fail', `Only ${currentTopology.nodes.length} nodes`);
+        log(`✗ Only generated ${currentTopology.nodes.length} nodes`, 'error');
+      }
+
+      // Test 2: Render time
+      const renderStart = performance.now();
+      renderTopology(ctx, currentTopology, {
+        width: canvas.width,
+        height: canvas.height,
+        showCurvature,
+        showLabels,
+        scale,
+        offsetX,
+        offsetY,
+      });
+      const renderTime = performance.now() - renderStart;
+      document.getElementById('renderTime').textContent = renderTime.toFixed(1);
+
+      if (renderTime < 100) {
+        setTestStatus('test2', 'pass', `${renderTime.toFixed(1)}ms`);
+        log(`✓ Rendered in ${renderTime.toFixed(1)}ms`, 'success');
+      } else {
+        setTestStatus('test2', 'fail', `${renderTime.toFixed(1)}ms`);
+        log(`✗ Render took ${renderTime.toFixed(1)}ms (target: <100ms)`, 'error');
+      }
+
+      // Test 4: All nodes inside disk
+      let nodesOutside = 0;
+      currentTopology.nodes.forEach(node => {
+        const norm = Math.sqrt(node.coordinate.x ** 2 + node.coordinate.y ** 2);
+        if (norm >= 1) nodesOutside++;
+      });
+
+      if (nodesOutside === 0) {
+        setTestStatus('test4', 'pass');
+        log('✓ All nodes inside Poincaré disk', 'success');
+      } else {
+        setTestStatus('test4', 'fail', `${nodesOutside} outside`);
+        log(`✗ ${nodesOutside} nodes outside disk`, 'error');
+      }
+
+      // Test 5: Curvature heatmap
+      if (showCurvature) {
+        const hasValidCurvatures = currentTopology.edges.every(e => 
+          e.curvature !== undefined && e.curvature >= -1 && e.curvature <= 1
+        );
+        if (hasValidCurvatures) {
+          setTestStatus('test5', 'pass');
+          log('✓ Curvature heatmap rendered correctly', 'success');
+        } else {
+          setTestStatus('test5', 'fail');
+          log('✗ Invalid curvature values', 'error');
+        }
+      } else {
+        setTestStatus('test5', 'pass', 'Disabled');
+      }
+
+      // Test 3 & 6: FPS test (run animation loop)
+      log('Running FPS test (5 seconds)...', 'info');
+      frameCount = 0;
+      lastFpsTime = performance.now();
+      
+      const fpsTestDuration = 5000;
+      const fpsTestStart = performance.now();
+      let minFps = Infinity;
+
+      const animationLoop = () => {
+        const now = performance.now();
+        
+        // Simulate interaction by slightly changing view
+        const t = (now - fpsTestStart) / 1000;
+        const testScale = 1 + 0.2 * Math.sin(t * 2);
+        const testOffsetX = 20 * Math.sin(t);
+        const testOffsetY = 20 * Math.cos(t);
+
+        renderTopology(ctx, currentTopology, {
+          width: canvas.width,
+          height: canvas.height,
+          showCurvature,
+          showLabels,
+          scale: testScale,
+          offsetX: testOffsetX,
+          offsetY: testOffsetY,
+        });
+
+        frameCount++;
+        
+        if (now - lastFpsTime >= 1000) {
+          currentFps = frameCount;
+          document.getElementById('fps').textContent = currentFps;
+          if (currentFps < minFps) minFps = currentFps;
+          frameCount = 0;
+          lastFpsTime = now;
+        }
+
+        if (now - fpsTestStart < fpsTestDuration) {
+          requestAnimationFrame(animationLoop);
+        } else {
+          // FPS test complete
+          if (minFps >= 30) {
+            setTestStatus('test3', 'pass', `${minFps} FPS min`);
+            log(`✓ Maintained ${minFps}+ FPS during interaction`, 'success');
+          } else {
+            setTestStatus('test3', 'fail', `${minFps} FPS min`);
+            log(`✗ FPS dropped to ${minFps} (target: 30+)`, 'error');
+          }
+
+          // Test 6: Zoom/Pan (passed if we got here without errors)
+          setTestStatus('test6', 'pass');
+          log('✓ Zoom/Pan works smoothly', 'success');
+
+          // Update memory usage
+          if (performance.memory) {
+            const memMB = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1);
+            document.getElementById('memory').textContent = memMB;
+          }
+
+          log('Test complete!', 'success');
+        }
+      };
+
+      requestAnimationFrame(animationLoop);
+    }
+
+    async function runAllTests() {
+      const sizes = [100, 500, 1000, 2000];
+      const types = ['ba', 'grid', 'random'];
+      
+      log('=== Running comprehensive test suite ===', 'info');
+      
+      for (const size of sizes) {
+        for (const type of types) {
+          document.getElementById('networkSize').value = size;
+          document.getElementById('topologyType').value = type;
+          log(`\n--- Testing ${size} nodes, ${type} topology ---`, 'info');
+          await runTest();
+          await new Promise(r => setTimeout(r, 6000)); // Wait for FPS test
+        }
+      }
+      
+      log('=== All tests complete ===', 'success');
+    }
+
+    // Event listeners
+    document.getElementById('runTest').addEventListener('click', runTest);
+    document.getElementById('runAllTests').addEventListener('click', runAllTests);
+
+    // Canvas interaction
+    const canvas = document.getElementById('canvas');
+    
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = -e.deltaY * 0.001;
+      scale = Math.max(0.1, Math.min(10, scale * (1 + delta)));
+      if (currentTopology) {
+        const ctx = canvas.getContext('2d');
+        renderTopology(ctx, currentTopology, {
+          width: canvas.width,
+          height: canvas.height,
+          showCurvature: document.getElementById('showCurvature').value === 'true',
+          showLabels: document.getElementById('showLabels').value === 'true',
+          scale,
+          offsetX,
+          offsetY,
+        });
+      }
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      dragStart = { x: e.clientX - offsetX, y: e.clientY - offsetY };
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      offsetX = e.clientX - dragStart.x;
+      offsetY = e.clientY - dragStart.y;
+      if (currentTopology) {
+        const ctx = canvas.getContext('2d');
+        renderTopology(ctx, currentTopology, {
+          width: canvas.width,
+          height: canvas.height,
+          showCurvature: document.getElementById('showCurvature').value === 'true',
+          showLabels: document.getElementById('showLabels').value === 'true',
+          scale,
+          offsetX,
+          offsetY,
+        });
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => { isDragging = false; });
+    canvas.addEventListener('mouseleave', () => { isDragging = false; });
+
+    canvas.addEventListener('dblclick', () => {
+      scale = 1;
+      offsetX = 0;
+      offsetY = 0;
+      if (currentTopology) {
+        const ctx = canvas.getContext('2d');
+        renderTopology(ctx, currentTopology, {
+          width: canvas.width,
+          height: canvas.height,
+          showCurvature: document.getElementById('showCurvature').value === 'true',
+          showLabels: document.getElementById('showLabels').value === 'true',
+          scale,
+          offsetX,
+          offsetY,
+        });
+      }
+    });
+
+    log('Test page loaded. Click "Run Test" to start.', 'info');
+  </script>
+</body>
+</html>

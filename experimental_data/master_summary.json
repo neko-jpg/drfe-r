@@ -1,0 +1,464 @@
+{
+  "project": "DRFE-R Experimental Data",
+  "generated": "2026-01-02T09:25:01.494066",
+  "experiments": {
+    "scalability": {
+      "experiment": "Scalability Analysis",
+      "timestamp": "2026-01-01T13:11:35.348232571+00:00",
+      "network_sizes": [
+        100,
+        300,
+        500,
+        1000,
+        3000,
+        5000
+      ],
+      "num_tests_per_size": 1000,
+      "max_ttl": 200,
+      "seed": 42,
+      "total_tests": 6000,
+      "results_summary": [
+        {
+          "network_size": 100,
+          "success_rate": "100.0%",
+          "avg_hops": "5.29",
+          "stretch_ratio": "2.10",
+          "routing_time_us": "22.0",
+          "memory_mb": "0.010"
+        },
+        {
+          "network_size": 300,
+          "success_rate": "94.5%",
+          "avg_hops": "11.89",
+          "stretch_ratio": "3.94",
+          "routing_time_us": "67.0",
+          "memory_mb": "0.030"
+        },
+        {
+          "network_size": 500,
+          "success_rate": "89.6%",
+          "avg_hops": "17.14",
+          "stretch_ratio": "5.29",
+          "routing_time_us": "113.0",
+          "memory_mb": "0.050"
+        },
+        {
+          "network_size": 1000,
+          "success_rate": "83.0%",
+          "avg_hops": "31.05",
+          "stretch_ratio": "8.93",
+          "routing_time_us": "183.0",
+          "memory_mb": "0.099"
+        },
+        {
+          "network_size": 3000,
+          "success_rate": "56.9%",
+          "avg_hops": "38.55",
+          "stretch_ratio": "10.06",
+          "routing_time_us": "454.0",
+          "memory_mb": "0.298"
+        },
+        {
+          "network_size": 5000,
+          "success_rate": "51.2%",
+          "avg_hops": "42.41",
+          "stretch_ratio": "10.56",
+          "routing_time_us": "1001.0",
+          "memory_mb": "0.496"
+        }
+      ]
+    },
+    "topology": {
+      "BarabasiAlbert": [
+        {
+          "network_size": 100,
+          "success_rate": 0.999,
+          "avg_hops": 5.645645645645645,
+          "stretch_ratio": 2.22397476340694,
+          "num_edges": 294
+        },
+        {
+          "network_size": 200,
+          "success_rate": 0.958,
+          "avg_hops": 7.6941544885177455,
+          "stretch_ratio": 2.66101083032491,
+          "num_edges": 594
+        },
+        {
+          "network_size": 300,
+          "success_rate": 0.924,
+          "avg_hops": 10.273809523809524,
+          "stretch_ratio": 3.414748201438849,
+          "num_edges": 894
+        }
+      ],
+      "WattsStrogatz": [
+        {
+          "network_size": 100,
+          "success_rate": 0.989,
+          "avg_hops": 5.972699696663296,
+          "stretch_ratio": 1.6886792452830188,
+          "num_edges": 300
+        },
+        {
+          "network_size": 200,
+          "success_rate": 1.0,
+          "avg_hops": 7.101,
+          "stretch_ratio": 1.6502440158029281,
+          "num_edges": 600
+        },
+        {
+          "network_size": 300,
+          "success_rate": 0.995,
+          "avg_hops": 11.085427135678392,
+          "stretch_ratio": 2.300792657488527,
+          "num_edges": 900
+        }
+      ],
+      "Grid": [
+        {
+          "network_size": 100,
+          "success_rate": 1.0,
+          "avg_hops": 10.861,
+          "stretch_ratio": 1.593222825289717,
+          "num_edges": 180
+        },
+        {
+          "network_size": 200,
+          "success_rate": 0.925,
+          "avg_hops": 13.69945945945946,
+          "stretch_ratio": 1.4814122048164602,
+          "num_edges": 371
+        },
+        {
+          "network_size": 300,
+          "success_rate": 0.925,
+          "avg_hops": 18.127567567567567,
+          "stretch_ratio": 1.5957365816520745,
+          "num_edges": 565
+        }
+      ],
+      "Random": [
+        {
+          "network_size": 100,
+          "success_rate": 1.0,
+          "avg_hops": 5.046,
+          "stretch_ratio": 1.5734331150608045,
+          "num_edges": 227
+        },
+        {
+          "network_size": 200,
+          "success_rate": 0.966,
+          "avg_hops": 6.635610766045549,
+          "stretch_ratio": 2.587807832054905,
+          "num_edges": 931
+        },
+        {
+          "network_size": 300,
+          "success_rate": 0.925,
+          "avg_hops": 7.486486486486487,
+          "stretch_ratio": 3.103989242492156,
+          "num_edges": 2263
+        }
+      ],
+      "RealWorld": [
+        {
+          "network_size": 100,
+          "success_rate": 0.978,
+          "avg_hops": 15.53476482617587,
+          "stretch_ratio": 2.4073839328157187,
+          "num_edges": 200
+        },
+        {
+          "network_size": 200,
+          "success_rate": 0.981,
+          "avg_hops": 12.523955147808358,
+          "stretch_ratio": 2.212099387828592,
+          "num_edges": 539
+        },
+        {
+          "network_size": 300,
+          "success_rate": 0.934,
+          "avg_hops": 11.485010706638116,
+          "stretch_ratio": 2.191867592970985,
+          "num_edges": 1013
+        }
+      ]
+    },
+    "baseline": {
+      "DRFE-R": {
+        "total_tests": 1200,
+        "avg_success_rate": 0.9908333333333333,
+        "avg_hops": 13.915443293479008,
+        "configurations": [
+          {
+            "network_size": 50,
+            "topology": "ba",
+            "success_rate": 1.0,
+            "avg_hops": 3.63,
+            "avg_latency_us": 1.69
+          },
+          {
+            "network_size": 50,
+            "topology": "random",
+            "success_rate": 0.96,
+            "avg_hops": 3.625,
+            "avg_latency_us": 1.09375
+          },
+          {
+            "network_size": 50,
+            "topology": "grid",
+            "success_rate": 0.98,
+            "avg_hops": 4.989795918367347,
+            "avg_latency_us": 1.163265306122449
+          },
+          {
+            "network_size": 100,
+            "topology": "ba",
+            "success_rate": 0.98,
+            "avg_hops": 6.591836734693878,
+            "avg_latency_us": 2.877551020408163
+          },
+          {
+            "network_size": 100,
+            "topology": "random",
+            "success_rate": 0.99,
+            "avg_hops": 4.4646464646464645,
+            "avg_latency_us": 1.5454545454545454
+          },
+          {
+            "network_size": 100,
+            "topology": "grid",
+            "success_rate": 0.99,
+            "avg_hops": 8.16161616161616,
+            "avg_latency_us": 2.808080808080808
+          },
+          {
+            "network_size": 200,
+            "topology": "ba",
+            "success_rate": 1.0,
+            "avg_hops": 23.67,
+            "avg_latency_us": 8.17
+          },
+          {
+            "network_size": 200,
+            "topology": "random",
+            "success_rate": 1.0,
+            "avg_hops": 15.52,
+            "avg_latency_us": 4.82
+          },
+          {
+            "network_size": 200,
+            "topology": "grid",
+            "success_rate": 0.99,
+            "avg_hops": 16.242424242424242,
+            "avg_latency_us": 5.757575757575758
+          },
+          {
+            "network_size": 300,
+            "topology": "ba",
+            "success_rate": 1.0,
+            "avg_hops": 43.4,
+            "avg_latency_us": 14.77
+          },
+          {
+            "network_size": 300,
+            "topology": "random",
+            "success_rate": 1.0,
+            "avg_hops": 7.14,
+            "avg_latency_us": 3.01
+          },
+          {
+            "network_size": 300,
+            "topology": "grid",
+            "success_rate": 1.0,
+            "avg_hops": 29.55,
+            "avg_latency_us": 11.75
+          }
+        ]
+      },
+      "Chord": {
+        "total_tests": 1200,
+        "avg_success_rate": 0.9908333333333333,
+        "avg_hops": 5.383609865663438,
+        "configurations": [
+          {
+            "network_size": 50,
+            "topology": "ba",
+            "success_rate": 1.0,
+            "avg_hops": 4.86,
+            "avg_latency_us": 0.09
+          },
+          {
+            "network_size": 50,
+            "topology": "random",
+            "success_rate": 0.99,
+            "avg_hops": 5.08080808080808,
+            "avg_latency_us": 0.20202020202020202
+          },
+          {
+            "network_size": 50,
+            "topology": "grid",
+            "success_rate": 0.96,
+            "avg_hops": 4.5625,
+            "avg_latency_us": 0.13541666666666666
+          },
+          {
+            "network_size": 100,
+            "topology": "ba",
+            "success_rate": 1.0,
+            "avg_hops": 4.84,
+            "avg_latency_us": 0.33
+          },
+          {
+            "network_size": 100,
+            "topology": "random",
+            "success_rate": 0.98,
+            "avg_hops": 5.3061224489795915,
+            "avg_latency_us": 0.32653061224489793
+          },
+          {
+            "network_size": 100,
+            "topology": "grid",
+            "success_rate": 0.99,
+            "avg_hops": 5.05050505050505,
+            "avg_latency_us": 0.25252525252525254
+          },
+          {
+            "network_size": 200,
+            "topology": "ba",
+            "success_rate": 1.0,
+            "avg_hops": 6.05,
+            "avg_latency_us": 0.61
+          },
+          {
+            "network_size": 200,
+            "topology": "random",
+            "success_rate": 0.98,
+            "avg_hops": 5.744897959183674,
+            "avg_latency_us": 0.9285714285714286
+          },
+          {
+            "network_size": 200,
+            "topology": "grid",
+            "success_rate": 1.0,
+            "avg_hops": 5.74,
+            "avg_latency_us": 0.58
+          },
+          {
+            "network_size": 300,
+            "topology": "ba",
+            "success_rate": 1.0,
+            "avg_hops": 5.66,
+            "avg_latency_us": 0.67
+          },
+          {
+            "network_size": 300,
+            "topology": "random",
+            "success_rate": 1.0,
+            "avg_hops": 5.86,
+            "avg_latency_us": 0.71
+          },
+          {
+            "network_size": 300,
+            "topology": "grid",
+            "success_rate": 0.99,
+            "avg_hops": 5.848484848484849,
+            "avg_latency_us": 0.6464646464646465
+          }
+        ]
+      },
+      "Kademlia": {
+        "total_tests": 1200,
+        "avg_success_rate": 0.9925,
+        "avg_hops": 1.424150899555907,
+        "configurations": [
+          {
+            "network_size": 50,
+            "topology": "ba",
+            "success_rate": 1.0,
+            "avg_hops": 1.11,
+            "avg_latency_us": 6.06
+          },
+          {
+            "network_size": 50,
+            "topology": "random",
+            "success_rate": 0.97,
+            "avg_hops": 1.0721649484536082,
+            "avg_latency_us": 5.319587628865979
+          },
+          {
+            "network_size": 50,
+            "topology": "grid",
+            "success_rate": 1.0,
+            "avg_hops": 1.13,
+            "avg_latency_us": 6.35
+          },
+          {
+            "network_size": 100,
+            "topology": "ba",
+            "success_rate": 1.0,
+            "avg_hops": 1.32,
+            "avg_latency_us": 12.21
+          },
+          {
+            "network_size": 100,
+            "topology": "random",
+            "success_rate": 0.99,
+            "avg_hops": 1.3131313131313131,
+            "avg_latency_us": 8.93939393939394
+          },
+          {
+            "network_size": 100,
+            "topology": "grid",
+            "success_rate": 0.98,
+            "avg_hops": 1.346938775510204,
+            "avg_latency_us": 11.653061224489797
+          },
+          {
+            "network_size": 200,
+            "topology": "ba",
+            "success_rate": 0.99,
+            "avg_hops": 1.5858585858585859,
+            "avg_latency_us": 16.474747474747474
+          },
+          {
+            "network_size": 200,
+            "topology": "random",
+            "success_rate": 1.0,
+            "avg_hops": 1.62,
+            "avg_latency_us": 15.9
+          },
+          {
+            "network_size": 200,
+            "topology": "grid",
+            "success_rate": 0.99,
+            "avg_hops": 1.5353535353535352,
+            "avg_latency_us": 14.686868686868687
+          },
+          {
+            "network_size": 300,
+            "topology": "ba",
+            "success_rate": 1.0,
+            "avg_hops": 1.74,
+            "avg_latency_us": 21.71
+          },
+          {
+            "network_size": 300,
+            "topology": "random",
+            "success_rate": 1.0,
+            "avg_hops": 1.68,
+            "avg_latency_us": 24.45
+          },
+          {
+            "network_size": 300,
+            "topology": "grid",
+            "success_rate": 0.99,
+            "avg_hops": 1.6363636363636365,
+            "avg_latency_us": 23.434343434343436
+          }
+        ]
+      }
+    }
+  }
+}

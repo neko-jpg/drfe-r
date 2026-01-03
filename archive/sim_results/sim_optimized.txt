@@ -1,0 +1,33 @@
+DRFE-R Simulator
+================
+
+Configuration:
+  Nodes:     100
+  Topology:  barabasi-albert
+  Tests:     500
+  Max TTL:   50
+  Seed:      42
+  Optimize:  yes
+
+Generating network... done (0 ms)
+  Nodes: 100
+  Edges: 294
+
+Running Ricci Flow optimization (20 iterations)... done (78 ms, residual stress: 9212.5644)
+
+Running routing simulation... done
+
+=== Simulation Results ===
+Total tests:          500
+Successful:           104
+Failed:               396
+Success rate:         20.80%
+Average hops:         2.13
+Gravity hops:         170
+Pressure hops:        52
+TTL failures:         396
+No path failures:     0
+Elapsed time:         11 ms
+
+✗ VERIFICATION ISSUE: 20.8% success rate
+  Check network connectivity or increase TTL
