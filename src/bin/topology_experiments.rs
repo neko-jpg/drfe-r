@@ -14,6 +14,7 @@
 
 use drfe_r::coordinates::{NodeId, RoutingCoordinate};
 use drfe_r::greedy_embedding::GreedyEmbedding;
+use drfe_r::landmark_routing::{LandmarkRoutingConfig, LandmarkRoutingTable};
 use drfe_r::routing::{GPRouter, RoutingNode};
 use drfe_r::PoincareDiskPoint;
 use rand::prelude::*;
@@ -51,6 +52,8 @@ pub struct TopologyConfig {
     pub num_tests: usize,
     pub max_ttl: u32,
     pub seed: u64,
+    pub routing_algorithm: RoutingAlgorithm,
+    pub landmark_config: LandmarkRoutingConfig,
     // BA parameters
     pub ba_m: usize,
     // WS parameters
@@ -70,11 +73,28 @@ impl Default for TopologyConfig {
             num_tests: 1000,
             max_ttl: 100,
             seed: 42,
+            routing_algorithm: RoutingAlgorithm::Baseline,
+            landmark_config: LandmarkRoutingConfig::default(),
             ba_m: 3,
             ws_k: 6,
             ws_beta: 0.1,
             random_p: 0.05,
             real_world_path: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RoutingAlgorithm {
+    Baseline,
+    Landmark,
+}
+
+impl std::fmt::Display for RoutingAlgorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RoutingAlgorithm::Baseline => write!(f, "baseline"),
+            RoutingAlgorithm::Landmark => write!(f, "landmark"),
         }
     }
 }
@@ -462,7 +482,7 @@ fn load_edge_list(path: &str) -> Result<(Vec<NodeId>, Vec<Vec<usize>>), String> 
 
 /// Build GPRouter from adjacency list using PIE embedding
 fn build_router_from_adjacency(
-    _config: &TopologyConfig,
+    config: &TopologyConfig,
     nodes: &[NodeId],
     adjacency_idx: &[Vec<usize>],
 ) -> GPRouter {
@@ -517,6 +537,20 @@ fn build_router_from_adjacency(
         for &j in neighbors {
             if i < j {
                 router.add_edge(&nodes[i], &nodes[j]);
+            }
+        }
+    }
+
+    if config.routing_algorithm == RoutingAlgorithm::Landmark {
+        match LandmarkRoutingTable::build(&adjacency, &config.landmark_config) {
+            Ok(table) => {
+                router.enable_landmark_routing(table, config.landmark_config.clone());
+            }
+            Err(err) => {
+                println!(
+                    "Failed to build landmark routing table: {}. Using baseline routing.",
+                    err
+                );
             }
         }
     }
@@ -830,6 +864,8 @@ fn main() {
     let mut seeds_override: Option<Vec<u64>> = None;
     let mut summary_output: Option<String> = None;
     let mut edge_list_path: Option<String> = None;
+    let mut routing_algorithm = RoutingAlgorithm::Baseline;
+    let mut landmark_config = LandmarkRoutingConfig::default();
 
     let mut i = 1;
     while i < args.len() {
@@ -879,6 +915,54 @@ fn main() {
                     i += 1;
                 }
             }
+            "--routing" => {
+                if i + 1 < args.len() {
+                    routing_algorithm = match args[i + 1].as_str() {
+                        "baseline" => RoutingAlgorithm::Baseline,
+                        "landmark" | "real" => RoutingAlgorithm::Landmark,
+                        _ => routing_algorithm,
+                    };
+                    i += 1;
+                }
+            }
+            "--landmarks" => {
+                if i + 1 < args.len() {
+                    if let Ok(count) = args[i + 1].parse::<usize>() {
+                        if count > 0 {
+                            landmark_config.num_landmarks = Some(count);
+                        }
+                    }
+                    i += 1;
+                }
+            }
+            "--lookahead-depth" => {
+                if i + 1 < args.len() {
+                    landmark_config.lookahead_depth =
+                        args[i + 1].parse().unwrap_or(landmark_config.lookahead_depth);
+                    i += 1;
+                }
+            }
+            "--lookahead-max" => {
+                if i + 1 < args.len() {
+                    landmark_config.lookahead_max_nodes =
+                        args[i + 1].parse().unwrap_or(landmark_config.lookahead_max_nodes);
+                    i += 1;
+                }
+            }
+            "--landmark-weight" => {
+                if i + 1 < args.len() {
+                    landmark_config.landmark_weight =
+                        args[i + 1].parse().unwrap_or(landmark_config.landmark_weight);
+                    i += 1;
+                }
+            }
+            "--hyper-weight" => {
+                if i + 1 < args.len() {
+                    landmark_config.hyperbolic_weight =
+                        args[i + 1].parse().unwrap_or(landmark_config.hyperbolic_weight);
+                    i += 1;
+                }
+            }
             "--help" | "-h" => {
                 println!("Usage: topology_experiments [OPTIONS]");
                 println!();
@@ -890,6 +974,12 @@ fn main() {
                 println!("      --seeds LIST   Comma-separated seeds (overrides --seed)");
                 println!("      --summary-output FILE  Summary JSON output (optional)");
                 println!("      --edge-list FILE  Real-world edge list file for Real-World topology");
+                println!("      --routing MODE  Routing algorithm: baseline, landmark");
+                println!("      --landmarks NUM  Number of landmarks (default: auto)");
+                println!("      --lookahead-depth NUM  Lookahead BFS depth (default: 3)");
+                println!("      --lookahead-max NUM  Lookahead BFS node cap (default: 5000)");
+                println!("      --landmark-weight NUM  Landmark distance weight (default: 1.0)");
+                println!("      --hyper-weight NUM  Hyperbolic distance weight (default: 0.15)");
                 println!("  -h, --help         Show this help");
                 return;
             }
@@ -904,6 +994,18 @@ fn main() {
     println!("  Output file:        {}", output_file);
     if let Some(path) = &edge_list_path {
         println!("  Real-world edge list: {}", path);
+    }
+    println!("  Routing algorithm:  {}", routing_algorithm);
+    if routing_algorithm == RoutingAlgorithm::Landmark {
+        let landmark_count = landmark_config
+            .num_landmarks
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "auto".to_string());
+        println!("  Landmarks:          {}", landmark_count);
+        println!("  Lookahead depth:    {}", landmark_config.lookahead_depth);
+        println!("  Lookahead max:      {}", landmark_config.lookahead_max_nodes);
+        println!("  Landmark weight:    {}", landmark_config.landmark_weight);
+        println!("  Hyper weight:       {}", landmark_config.hyperbolic_weight);
     }
     let seeds = seeds_override.unwrap_or_else(|| vec![seed]);
     println!("  Seeds:              {:?}", seeds);
@@ -938,6 +1040,8 @@ fn main() {
                 num_tests,
                 max_ttl: 100,
                 seed: *current_seed,
+                routing_algorithm,
+                landmark_config: landmark_config.clone(),
                 ba_m: 3,
                 ws_k: 6,
                 ws_beta: 0.1,

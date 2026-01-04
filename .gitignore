@@ -51,4 +51,7 @@ experiment_*.txt
 paper_data/sim_*.txt
 paper_data/debug_*.txt
 
+# External datasets (never commit)
+paper_data/input/
+
 archive/phase6/

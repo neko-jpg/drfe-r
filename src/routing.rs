@@ -3,12 +3,13 @@
 //! Implements the routing algorithm that provides theoretical delivery guarantee
 //! even when greedy forwarding fails due to local minima.
 //!
-//! Reference: Cvetkovski–Crovella (2009)
+//! Reference: Cvetkovski窶鼎rovella (2009)
 
 use crate::coordinates::{NodeId, RoutingCoordinate};
+use crate::landmark_routing::{LandmarkRoutingConfig, LandmarkRoutingTable};
 use crate::PoincareDiskPoint;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 /// Routing mode for the GP algorithm
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -19,7 +20,7 @@ pub enum RoutingMode {
     Pressure,
     /// Tree mode: use spanning tree structure for guaranteed delivery (DFS fallback)
     Tree,
-    /// Thorup-Zwick mode: use precomputed routing table with stretch ≤ 3 guarantee
+    /// Thorup-Zwick mode: use precomputed routing table with stretch 竕､ 3 guarantee
     ThorupZwick,
 }
 
@@ -51,11 +52,11 @@ pub struct PacketHeader {
     pub visited: HashSet<NodeId>,
     /// Pressure values accumulated during Pressure mode
     pub pressure_values: HashMap<NodeId, f64>,
-    /// リカバリを開始した地点のゴールまでの距離（脱出判定用）
+    /// 繝ｪ繧ｫ繝舌Μ繧帝幕蟋九＠縺溷慍轤ｹ縺ｮ繧ｴ繝ｼ繝ｫ縺ｾ縺ｧ縺ｮ霍晞屬・郁┳蜃ｺ蛻､螳夂畑・・
     pub recovery_threshold: f64,
-    /// Pressureモードのステップ数上限（これを使い切ったらTreeへ）
+    /// Pressure繝｢繝ｼ繝峨・繧ｹ繝・ャ繝玲焚荳企剞・医％繧後ｒ菴ｿ縺・・縺｣縺溘ｉTree縺ｸ・・
     pub pressure_budget: u32,
-    /// DFSバックトラック用スタック: 戻るべきノードのパス
+    /// DFS繝舌ャ繧ｯ繝医Λ繝・け逕ｨ繧ｹ繧ｿ繝・け: 謌ｻ繧九∋縺阪ヮ繝ｼ繝峨・繝代せ
     pub dfs_stack: Vec<NodeId>,
     /// TZ routing: precomputed path to follow
     pub tz_path: Vec<NodeId>,
@@ -78,7 +79,7 @@ impl PacketHeader {
             ttl,
             visited: HashSet::new(),
             pressure_values: HashMap::new(),
-            recovery_threshold: f64::INFINITY, // 初期値は無限大
+            recovery_threshold: f64::INFINITY, // 蛻晄悄蛟､縺ｯ辟｡髯仙､ｧ
             pressure_budget: 0,
             dfs_stack: Vec::new(),
             tz_path: Vec::new(),
@@ -142,6 +143,12 @@ impl RoutingNode {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct LandmarkRoutingState {
+    pub config: LandmarkRoutingConfig,
+    pub table: LandmarkRoutingTable,
+}
+
 /// GP Router implementing Gravity-Pressure routing algorithm
 pub struct GPRouter {
     /// All nodes in the network
@@ -150,8 +157,10 @@ pub struct GPRouter {
     pressure_decay: f64,
     /// Pressure increment per visit
     pressure_increment: f64,
-    /// Optional Thorup-Zwick routing table for guaranteed stretch ≤ 3
+    /// Optional Thorup-Zwick routing table for guaranteed stretch 竕､ 3
     tz_table: Option<crate::tz_routing::TZRoutingTable>,
+    /// Optional landmark routing state for real-world graphs
+    landmark_state: Option<LandmarkRoutingState>,
 }
 
 impl GPRouter {
@@ -161,6 +170,7 @@ impl GPRouter {
             pressure_decay: 0.95,        // Slower decay to maintain pressure longer
             pressure_increment: 5.0,     // Stronger pressure to overcome distance
             tz_table: None,
+            landmark_state: None,
         }
     }
 
@@ -189,7 +199,7 @@ impl GPRouter {
         self.nodes.get_mut(id)
     }
 
-    /// Set the Thorup-Zwick routing table for guaranteed stretch ≤ 3 fallback
+    /// Set the Thorup-Zwick routing table for guaranteed stretch 竕､ 3 fallback
     pub fn set_tz_table(&mut self, table: crate::tz_routing::TZRoutingTable) {
         self.tz_table = Some(table);
     }
@@ -200,21 +210,142 @@ impl GPRouter {
     }
 
     /// Get reference to TZ table
-    pub fn get_tz_table(&self) -> Option<&crate::tz_routing::TZRoutingTable> {
+    pub fn get_tz_table(&self) -> Option<&crate::tz_routing::TZRoutingTable> {  
         self.tz_table.as_ref()
     }
 
+    /// Enable landmark-guided routing heuristics
+    pub fn enable_landmark_routing(
+        &mut self,
+        table: LandmarkRoutingTable,
+        config: LandmarkRoutingConfig,
+    ) {
+        self.landmark_state = Some(LandmarkRoutingState { config, table });
+    }
+
+    /// Check if landmark-guided routing is enabled
+    pub fn has_landmark_routing(&self) -> bool {
+        self.landmark_state.is_some()
+    }
+
+    fn distance_to_target(&self, node_id: &NodeId, packet: &PacketHeader) -> f64 {
+        if let Some(state) = &self.landmark_state {
+            if let Some(landmark_dist) = state.table.distance(node_id, &packet.destination) {
+                if state.config.hyperbolic_weight <= 0.0 {
+                    return state.config.landmark_weight * landmark_dist;
+                }
+                let hyper = self
+                    .nodes
+                    .get(node_id)
+                    .map(|n| n.coord.point.hyperbolic_distance(&packet.target_coord))
+                    .unwrap_or(f64::INFINITY);
+                return state.config.landmark_weight * landmark_dist
+                    + state.config.hyperbolic_weight * hyper;
+            }
+        }
+
+        self.nodes
+            .get(node_id)
+            .map(|n| n.coord.point.hyperbolic_distance(&packet.target_coord))
+            .unwrap_or(f64::INFINITY)
+    }
+
+    fn try_lookahead_routing(
+        &self,
+        current: &RoutingNode,
+        packet: &PacketHeader,
+    ) -> Option<NodeId> {
+        let state = self.landmark_state.as_ref()?;
+        if state.config.lookahead_depth == 0 {
+            return None;
+        }
+
+        let max_nodes = state.config.lookahead_max_nodes.max(1);
+        let current_score = self.distance_to_target(&current.id, packet);
+
+        let mut queue = VecDeque::new();
+        let mut parents: HashMap<NodeId, NodeId> = HashMap::new();
+        let mut depths: HashMap<NodeId, usize> = HashMap::new();
+        let mut visited: HashSet<NodeId> = HashSet::new();
+
+        queue.push_back(current.id.clone());
+        depths.insert(current.id.clone(), 0);
+        visited.insert(current.id.clone());
+
+        let mut best_node: Option<NodeId> = None;
+        let mut best_score = current_score;
+        let mut best_depth = usize::MAX;
+
+        while let Some(node_id) = queue.pop_front() {
+            let node_depth = *depths.get(&node_id).unwrap_or(&0);
+            if node_depth >= state.config.lookahead_depth {
+                continue;
+            }
+
+            let node = match self.nodes.get(&node_id) {
+                Some(n) => n,
+                None => continue,
+            };
+
+            for neighbor_id in &node.neighbors {
+                if visited.contains(neighbor_id) || packet.visited.contains(neighbor_id) {
+                    continue;
+                }
+                visited.insert(neighbor_id.clone());
+                parents.insert(neighbor_id.clone(), node_id.clone());
+
+                let next_depth = node_depth + 1;
+                depths.insert(neighbor_id.clone(), next_depth);
+
+                let score = self.distance_to_target(neighbor_id, packet);
+                if score + 1e-9 < best_score || (score <= best_score + 1e-9 && next_depth < best_depth) {
+                    best_score = score;
+                    best_node = Some(neighbor_id.clone());
+                    best_depth = next_depth;
+                }
+
+                if visited.len() >= max_nodes {
+                    break;
+                }
+                queue.push_back(neighbor_id.clone());
+            }
+
+            if visited.len() >= max_nodes {
+                break;
+            }
+        }
+
+        let target = best_node?;
+        self.reconstruct_first_step(&current.id, &target, &parents)
+    }
+
+    fn reconstruct_first_step(
+        &self,
+        start: &NodeId,
+        target: &NodeId,
+        parents: &HashMap<NodeId, NodeId>,
+    ) -> Option<NodeId> {
+        let mut current = target.clone();
+        while let Some(parent) = parents.get(&current) {
+            if parent == start {
+                return Some(current);
+            }
+            current = parent.clone();
+        }
+        None
+    }
+
     /// Make routing decision for a packet at the current node
-    /// 【Sticky Recovery】: モードに応じた厳格な制御フローを実装
+    /// 縲心ticky Recovery縲・ 繝｢繝ｼ繝峨↓蠢懊§縺溷宍譬ｼ縺ｪ蛻ｶ蠕｡繝輔Ο繝ｼ繧貞ｮ溯｣・
     pub fn route(&self, current_node: &NodeId, packet: &mut PacketHeader) -> RoutingDecision {
-        // TTLチェック
+        // TTL繝√ぉ繝・け
         if packet.ttl == 0 {
             return RoutingDecision::Failed {
                 reason: "TTL expired".to_string(),
             };
         }
 
-        // 到達チェック
+        // 蛻ｰ驕斐メ繧ｧ繝・け
         if current_node == &packet.destination {
             return RoutingDecision::Delivered;
         }
@@ -228,67 +359,74 @@ impl GPRouter {
             }
         };
 
-        // 訪問記録（Treeモード以外で使用）
-        // Treeモードでは別途DFS用のvisitedを管理
+        // 險ｪ蝠剰ｨ倬鹸・・ree繝｢繝ｼ繝我ｻ･螟悶〒菴ｿ逕ｨ・・
+        // Tree繝｢繝ｼ繝峨〒縺ｯ蛻･騾妊FS逕ｨ縺ｮvisited繧堤ｮ｡逅・
         if packet.mode != RoutingMode::Tree {
             packet.record_visit(current_node.clone());
         }
 
-        let current_dist = current.coord.point.hyperbolic_distance(&packet.target_coord);
+        let current_dist = self.distance_to_target(&current.id, packet);
 
-        // 【修正点】: モードに応じた厳格な分岐
+        // 縲蝉ｿｮ豁｣轤ｹ縲・ 繝｢繝ｼ繝峨↓蠢懊§縺溷宍譬ｼ縺ｪ蛻・ｲ・
         match packet.mode {
             RoutingMode::Gravity => {
-                // Gravityモード: 通常のGreedy転送
+                // Gravity mode: standard greedy forwarding
                 if let Some(decision) = self.try_gravity_routing(current, packet) {
                     return decision;
-                } else {
-                    // 局所解に陥った場合 -> Pressureモードへ移行 (First Line of Defense)
-                    packet.mode = RoutingMode::Pressure;
-                    packet.recovery_threshold = current_dist;
-                    // 予算設定: グラフ規模に応じた探索許容量 (例: N/2)
-                    packet.pressure_budget = (self.node_count() as u32) / 2;
-                    packet.pressure_values.clear(); // 新しい局所解なのでリセット
-
-                    return self.pressure_routing(current, packet);
                 }
+
+                if let Some(next_hop) = self.try_lookahead_routing(current, packet) {
+                    return RoutingDecision::Forward {
+                        next_hop,
+                        mode: RoutingMode::Gravity,
+                    };
+                }
+
+                // Local minimum -> Pressure mode (first-line recovery)
+                packet.mode = RoutingMode::Pressure;
+                packet.recovery_threshold = current_dist;
+                // Budget: proportional to graph size (e.g., N/2)
+                packet.pressure_budget = (self.node_count() as u32) / 2;
+                packet.pressure_values.clear(); // Reset on new local minimum
+
+                return self.pressure_routing(current, packet);
             },
             RoutingMode::Tree => {
-                // Treeモード (Sticky): 閾値を下回るまでGreedy厳禁 (Graph DFS)
+                // Tree繝｢繝ｼ繝・(Sticky): 髢ｾ蛟､繧剃ｸ句屓繧九∪縺ｧGreedy蜴ｳ遖・(Graph DFS)
                 
-                // 脱出判定: 現在位置がリカバリ開始地点より「確実に」ゴールに近いか？
-                // 厳密な不等号 (<) を使用。
+                // 閼ｱ蜃ｺ蛻､螳・ 迴ｾ蝨ｨ菴咲ｽｮ縺後Μ繧ｫ繝舌Μ髢句ｧ句慍轤ｹ繧医ｊ縲檎｢ｺ螳溘↓縲阪ざ繝ｼ繝ｫ縺ｫ霑代＞縺具ｼ・
+                // 蜴ｳ蟇・↑荳咲ｭ牙捷 (<) 繧剃ｽｿ逕ｨ縲・
                 if current_dist < packet.recovery_threshold {
-                    // 脱出成功 -> Gravityモードへ復帰
+                    // 閼ｱ蜃ｺ謌仙粥 -> Gravity繝｢繝ｼ繝峨∈蠕ｩ蟶ｰ
                     packet.mode = RoutingMode::Gravity;
                     packet.recovery_threshold = f64::INFINITY;
-                    packet.dfs_stack.clear(); // DFSスタックをクリア
-                    packet.visited.clear(); // 訪問履歴もクリア
+                    packet.dfs_stack.clear(); // DFS繧ｹ繧ｿ繝・け繧偵け繝ｪ繧｢
+                    packet.visited.clear(); // 險ｪ蝠丞ｱ･豁ｴ繧ゅけ繝ｪ繧｢
                     
-                    // Gravityを試行
+                    // Gravity繧定ｩｦ陦・
                     if let Some(decision) = self.try_gravity_routing(current, packet) {
                         return decision;
                     }
-                    // Gravityが失敗したら（稀なケースだが）再びTreeへ
+                    // Gravity縺悟､ｱ謨励＠縺溘ｉ・育ｨ縺ｪ繧ｱ繝ｼ繧ｹ縺縺鯉ｼ牙・縺ｳTree縺ｸ
                     packet.mode = RoutingMode::Tree;
                     packet.recovery_threshold = current_dist;
-                    // Tree再開時はvisitedをリセット
+                    // Tree蜀埼幕譎ゅ・visited繧偵Μ繧ｻ繝・ヨ
                     packet.visited.clear();
                     packet.visited.insert(current_node.clone());
                     packet.dfs_stack.clear();
                 }
 
-                // 脱出未完了 -> グラフDFSで強制ルーティング
+                // 閼ｱ蜃ｺ譛ｪ螳御ｺ・-> 繧ｰ繝ｩ繝疋FS縺ｧ蠑ｷ蛻ｶ繝ｫ繝ｼ繝・ぅ繝ｳ繧ｰ
                 if let Some(decision) = self.traverse_graph_dfs(current, packet) {
                     return decision;
                 }
                 
-                // DFSがNoneを返した = 全探索完了だが宛先未到達
-                // これは本来ありえない（連結グラフなら）
-                // 念のためvisitedをリセットして再試行
+                // DFS縺君one繧定ｿ斐＠縺・= 蜈ｨ謗｢邏｢螳御ｺ・□縺悟ｮ帛・譛ｪ蛻ｰ驕・
+                // 縺薙ｌ縺ｯ譛ｬ譚･縺ゅｊ縺医↑縺・ｼ磯｣邨舌げ繝ｩ繝輔↑繧会ｼ・
+                // 蠢ｵ縺ｮ縺溘ａvisited繧偵Μ繧ｻ繝・ヨ縺励※蜀崎ｩｦ陦・
                 if packet.visited.len() < self.node_count() {
-                    // まだ全ノードを訪問していない -> バグの可能性
-                    // visitedとスタックをリセットして再開
+                    // 縺ｾ縺蜈ｨ繝弱・繝峨ｒ險ｪ蝠上＠縺ｦ縺・↑縺・-> 繝舌げ縺ｮ蜿ｯ閭ｽ諤ｧ
+                    // visited縺ｨ繧ｹ繧ｿ繝・け繧偵Μ繧ｻ繝・ヨ縺励※蜀埼幕
                     packet.visited.clear();
                     packet.visited.insert(current_node.clone());
                     packet.dfs_stack.clear();
@@ -298,13 +436,13 @@ impl GPRouter {
                     }
                 }
                 
-                // 本当に失敗（グラフが非連結）
+                // 譛ｬ蠖薙↓螟ｱ謨暦ｼ医げ繝ｩ繝輔′髱樣｣邨撰ｼ・
                 return RoutingDecision::Failed { reason: "Graph is disconnected".to_string() };
             },
             RoutingMode::Pressure => {
-                // Pressureモード: 局所的な罠からの脱出
+                // Pressure繝｢繝ｼ繝・ 螻謇逧・↑鄂縺九ｉ縺ｮ閼ｱ蜃ｺ
                 
-                // 1. 脱出判定 (Gravityへの復帰)
+                // 1. 閼ｱ蜃ｺ蛻､螳・(Gravity縺ｸ縺ｮ蠕ｩ蟶ｰ)
                 if current_dist < packet.recovery_threshold {
                     packet.mode = RoutingMode::Gravity;
                     packet.recovery_threshold = f64::INFINITY;
@@ -313,34 +451,34 @@ impl GPRouter {
                     if let Some(decision) = self.try_gravity_routing(current, packet) {
                         return decision;
                     }
-                    // まさかの失敗ならPressure継続
+                    // 縺ｾ縺輔°縺ｮ螟ｱ謨励↑繧臼ressure邯咏ｶ・
                     packet.mode = RoutingMode::Pressure;
                     packet.recovery_threshold = current_dist;
                 }
 
-                // 2. 予算チェック (Treeへの最終フォールバック)
+                // 2. 莠育ｮ励メ繧ｧ繝・け (Tree縺ｸ縺ｮ譛邨ゅヵ繧ｩ繝ｼ繝ｫ繝舌ャ繧ｯ)
                 if packet.pressure_budget == 0 {
                     packet.mode = RoutingMode::Tree;
-                    // Recovery Thresholdはそのまま（Gravity復帰基準は変わらない）
-                    // DFSスタックを初期化（現在位置から開始）
+                    // Recovery Threshold縺ｯ縺昴・縺ｾ縺ｾ・・ravity蠕ｩ蟶ｰ蝓ｺ貅悶・螟峨ｏ繧峨↑縺・ｼ・
+                    // DFS繧ｹ繧ｿ繝・け繧貞・譛溷喧・育樟蝨ｨ菴咲ｽｮ縺九ｉ髢句ｧ具ｼ・
                     packet.dfs_stack.clear();
-                    // DFS用にvisitedをクリア（新しいDFS探索を開始）
+                    // DFS逕ｨ縺ｫvisited繧偵け繝ｪ繧｢・域眠縺励＞DFS謗｢邏｢繧帝幕蟋具ｼ・
                     packet.visited.clear();
                     packet.visited.insert(current_node.clone());
                     
                     if let Some(decision) = self.traverse_graph_dfs(current, packet) {
                         return decision;
                     }
-                    // DFSもダメなら失敗（グラフが非連結）
+                    // DFS繧ゅム繝｡縺ｪ繧牙､ｱ謨暦ｼ医げ繝ｩ繝輔′髱樣｣邨撰ｼ・
                     return RoutingDecision::Failed { reason: "Graph is disconnected".to_string() };
                 }
 
-                // 3. Pressure実行
+                // 3. Pressure螳溯｡・
                 packet.pressure_budget -= 1;
                 return self.pressure_routing(current, packet);
             },
             RoutingMode::ThorupZwick => {
-                // ThorupZwick mode: Follow precomputed TZ path for guaranteed stretch ≤ 3
+                // ThorupZwick mode: Follow precomputed TZ path for guaranteed stretch 竕､ 3
                 
                 // If TZ path is empty, compute it
                 if packet.tz_path.is_empty() {
@@ -399,24 +537,22 @@ impl GPRouter {
         }
     }
 
-    /// Gravity Mode: Greedy forwarding to neighbor closest to target
+        /// Gravity Mode: Greedy forwarding to neighbor closest to target
     fn try_gravity_routing(
         &self,
         current: &RoutingNode,
         packet: &PacketHeader,
     ) -> Option<RoutingDecision> {
-        let current_distance = current.coord.point.hyperbolic_distance(&packet.target_coord);
+        let current_distance = self.distance_to_target(&current.id, packet);
 
         let mut best_neighbor: Option<&NodeId> = None;
         let mut best_distance = current_distance;
 
         for neighbor_id in &current.neighbors {
-            if let Some(neighbor) = self.nodes.get(neighbor_id) {
-                let distance = neighbor.coord.point.hyperbolic_distance(&packet.target_coord);
-                if distance < best_distance {
-                    best_distance = distance;
-                    best_neighbor = Some(neighbor_id);
-                }
+            let distance = self.distance_to_target(neighbor_id, packet);
+            if distance < best_distance {
+                best_distance = distance;
+                best_neighbor = Some(neighbor_id);
             }
         }
 
@@ -440,11 +576,7 @@ impl GPRouter {
             });
         }
 
-        // Find neighbor closest to target node using BFS distance estimation
-        // For simplicity, we just pick any neighbor that might lead toward target
-        // In practice, this should use the TZ table's bunch information
-        
-        // Try to find neighbor with target in its bunch or neighbors
+        // Try to find neighbor with target in its neighbors
         for neighbor_id in &current.neighbors {
             if let Some(neighbor) = self.nodes.get(neighbor_id) {
                 if neighbor.neighbors.contains(target_node) {
@@ -456,7 +588,7 @@ impl GPRouter {
             }
         }
 
-        // Fallback: just pick first available neighbor
+        // Fallback: pick first available neighbor
         current.neighbors.first().map(|n| RoutingDecision::Forward {
             next_hop: n.clone(),
             mode: RoutingMode::ThorupZwick,
@@ -464,16 +596,16 @@ impl GPRouter {
     }
 
     /// Graph DFS Traversal: Explore graph systematically for guaranteed delivery
-    /// 
+    ///
     /// This implements a proper DFS that guarantees reachability in any connected graph.
-    /// 
+    ///
     /// Algorithm:
     /// 1. Mark current node as visited
     /// 2. Try any unvisited neighbor (explore deeper)
     /// 3. If all neighbors visited, backtrack using dfs_stack
-    /// 
+    ///
     /// Complexity: O(|V|) hops in the worst case for a connected graph
-    /// 
+    ///
     /// Key insight: We use dfs_stack to remember the path we came from,
     /// allowing proper backtracking without infinite loops.
     fn traverse_graph_dfs(
@@ -483,12 +615,12 @@ impl GPRouter {
     ) -> Option<RoutingDecision> {
         // Mark current node as visited (for DFS)
         packet.visited.insert(current.id.clone());
-        
+
         // 1. Try any unvisited neighbor (explore deeper)
         // Sort neighbors for deterministic behavior
         let mut neighbors: Vec<&NodeId> = current.neighbors.iter().collect();
         neighbors.sort_by(|a, b| a.0.cmp(&b.0));
-        
+
         for neighbor_id in neighbors {
             if !packet.visited.contains(neighbor_id) {
                 // Push current node to stack before moving forward
@@ -513,8 +645,6 @@ impl GPRouter {
         None
     }
 
-
-
     /// Pressure Mode: Use accumulated pressure to escape local minimum
     fn pressure_routing(&self, current: &RoutingNode, packet: &mut PacketHeader) -> RoutingDecision {
         // Calculate pressure-adjusted distances for each neighbor
@@ -522,25 +652,23 @@ impl GPRouter {
         let mut best_score = f64::INFINITY;
 
         for neighbor_id in &current.neighbors {
-            if let Some(neighbor) = self.nodes.get(neighbor_id) {
-                // Base distance (gravity component)
-                let distance = neighbor.coord.point.hyperbolic_distance(&packet.target_coord);
+            // Base distance (gravity component)
+            let distance = self.distance_to_target(neighbor_id, packet);
 
-                // Pressure component: penalize previously visited nodes
-                let pressure = packet
-                    .pressure_values
-                    .get(neighbor_id)
-                    .copied()
-                    .unwrap_or(0.0);
+            // Pressure component: penalize previously visited nodes
+            let pressure = packet
+                .pressure_values
+                .get(neighbor_id)
+                .copied()
+                .unwrap_or(0.0);
 
-                // Combined score: lower is better
-                // Nodes with high pressure (many visits) get higher scores, making them less attractive
-                let score = distance + pressure;
+            // Combined score: lower is better
+            // Nodes with high pressure (many visits) get higher scores, making them less attractive
+            let score = distance + pressure;
 
-                if score < best_score {
-                    best_score = score;
-                    best_neighbor = Some(neighbor_id.clone());
-                }
+            if score < best_score {
+                best_score = score;
+                best_neighbor = Some(neighbor_id.clone());
             }
         }
 
@@ -762,3 +890,12 @@ mod tests {
         assert!(result.failure_reason.is_some());
     }
 }
+
+
+
+
+
+
+
+
+

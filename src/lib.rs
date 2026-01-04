@@ -14,6 +14,7 @@ pub mod grpc;
 pub mod hierarchical;
 pub mod hyperbolic_models;
 pub mod landmark_embedding;
+pub mod landmark_routing;
 pub mod lockfree;
 pub mod network;
 pub mod network_tls;
