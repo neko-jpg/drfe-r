@@ -1,0 +1,58 @@
+[
+  {
+    "nodes": 100,
+    "tz_table_entries": 526,
+    "tz_bytes_estimated": 25568,
+    "bytes_per_node": 255.68,
+    "landmark_count": 10,
+    "avg_bunch_size": 2.46
+  },
+  {
+    "nodes": 500,
+    "tz_table_entries": 4054,
+    "tz_bytes_estimated": 195328,
+    "bytes_per_node": 390.656,
+    "landmark_count": 23,
+    "avg_bunch_size": 5.084
+  },
+  {
+    "nodes": 1000,
+    "tz_table_entries": 11923,
+    "tz_bytes_estimated": 573328,
+    "bytes_per_node": 573.328,
+    "landmark_count": 32,
+    "avg_bunch_size": 8.939
+  },
+  {
+    "nodes": 2000,
+    "tz_table_entries": 32797,
+    "tz_bytes_estimated": 1575696,
+    "bytes_per_node": 787.848,
+    "landmark_count": 45,
+    "avg_bunch_size": 13.4185
+  },
+  {
+    "nodes": 3000,
+    "tz_table_entries": 57733,
+    "tz_bytes_estimated": 2772944,
+    "bytes_per_node": 924.3146666666667,
+    "landmark_count": 55,
+    "avg_bunch_size": 16.264333333333333
+  },
+  {
+    "nodes": 5000,
+    "tz_table_entries": 104864,
+    "tz_bytes_estimated": 5035744,
+    "bytes_per_node": 1007.1488,
+    "landmark_count": 71,
+    "avg_bunch_size": 17.9848
+  },
+  {
+    "nodes": 10000,
+    "tz_table_entries": 266714,
+    "tz_bytes_estimated": 12805472,
+    "bytes_per_node": 1280.5472,
+    "landmark_count": 100,
+    "avg_bunch_size": 23.6914
+  }
+]

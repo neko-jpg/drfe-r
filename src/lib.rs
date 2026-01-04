@@ -13,6 +13,7 @@ pub mod greedy_embedding;
 pub mod grpc;
 pub mod hierarchical;
 pub mod hyperbolic_models;
+pub mod landmark_embedding;
 pub mod lockfree;
 pub mod network;
 pub mod network_tls;
@@ -23,6 +24,8 @@ pub mod stability;
 pub mod sybil;
 pub mod telemetry;
 pub mod tls;
+pub mod tz_routing;
+
 
 use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;

@@ -341,6 +341,8 @@ impl NetworkPacketHeader {
             recovery_threshold: self.recovery_threshold,
             pressure_budget: self.pressure_budget,
             dfs_stack: self.dfs_stack.iter().map(|s| NodeId::new(s)).collect(),
+            tz_path: Vec::new(),
+            tz_path_index: 0,
         }
     }
 

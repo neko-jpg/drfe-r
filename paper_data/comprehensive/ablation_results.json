@@ -1,0 +1,122 @@
+[
+  {
+    "nodes": 500,
+    "configuration": "Gravity-only",
+    "success_rate": 0.212,
+    "stretch": 1.0679611650485437,
+    "max_stretch": 2.0,
+    "gravity_pct": 100.0,
+    "pressure_pct": 0.0,
+    "tree_pct": 0.0
+  },
+  {
+    "nodes": 500,
+    "configuration": "PIE+DFS",
+    "success_rate": 1.0,
+    "stretch": 45.01185277604492,
+    "max_stretch": 633.5,
+    "gravity_pct": 1.5979710064584085,
+    "pressure_pct": 2.6748343820162432,
+    "tree_pct": 95.72719461152535
+  },
+  {
+    "nodes": 500,
+    "configuration": "PIE+TZ",
+    "success_rate": 1.0,
+    "stretch": 1.3986275733000624,
+    "max_stretch": 4.0,
+    "gravity_pct": 47.01159678858162,
+    "pressure_pct": 0.0,
+    "tree_pct": 52.98840321141838
+  },
+  {
+    "nodes": 500,
+    "configuration": "TZ-only",
+    "success_rate": 1.0,
+    "stretch": 0.8966933867735473,
+    "max_stretch": 2.0,
+    "gravity_pct": 0.0,
+    "pressure_pct": 0.0,
+    "tree_pct": 100.0
+  },
+  {
+    "nodes": 1000,
+    "configuration": "Gravity-only",
+    "success_rate": 0.158,
+    "stretch": 1.0658436213991769,
+    "max_stretch": 2.0,
+    "gravity_pct": 100.0,
+    "pressure_pct": 0.0,
+    "tree_pct": 0.0
+  },
+  {
+    "nodes": 1000,
+    "configuration": "PIE+DFS",
+    "success_rate": 1.0,
+    "stretch": 119.56639722863741,
+    "max_stretch": 1682.3333333333333,
+    "gravity_pct": 0.5784952363476573,
+    "pressure_pct": 1.421128113999295,
+    "tree_pct": 98.00037664965305
+  },
+  {
+    "nodes": 1000,
+    "configuration": "PIE+TZ",
+    "success_rate": 1.0,
+    "stretch": 1.3672055427251733,
+    "max_stretch": 3.5,
+    "gravity_pct": 44.5945945945946,
+    "pressure_pct": 0.0,
+    "tree_pct": 55.4054054054054
+  },
+  {
+    "nodes": 1000,
+    "configuration": "TZ-only",
+    "success_rate": 1.0,
+    "stretch": 0.8610220440881768,
+    "max_stretch": 2.0,
+    "gravity_pct": 0.0,
+    "pressure_pct": 0.0,
+    "tree_pct": 100.0
+  },
+  {
+    "nodes": 2000,
+    "configuration": "Gravity-only",
+    "success_rate": 0.124,
+    "stretch": 1.0761904761904761,
+    "max_stretch": 1.6666666666666667,
+    "gravity_pct": 100.0,
+    "pressure_pct": 0.0,
+    "tree_pct": 0.0
+  },
+  {
+    "nodes": 2000,
+    "configuration": "PIE+DFS",
+    "success_rate": 1.0,
+    "stretch": 321.302688172043,
+    "max_stretch": 1942.0,
+    "gravity_pct": 0.20916196331131834,
+    "pressure_pct": 0.7149992553834106,
+    "tree_pct": 99.07583878130527
+  },
+  {
+    "nodes": 2000,
+    "configuration": "PIE+TZ",
+    "success_rate": 1.0,
+    "stretch": 1.353763440860215,
+    "max_stretch": 3.5,
+    "gravity_pct": 43.28832406671962,
+    "pressure_pct": 0.0,
+    "tree_pct": 56.71167593328038
+  },
+  {
+    "nodes": 2000,
+    "configuration": "TZ-only",
+    "success_rate": 1.0,
+    "stretch": 0.8052772211088863,
+    "max_stretch": 1.5,
+    "gravity_pct": 0.0,
+    "pressure_pct": 0.0,
+    "tree_pct": 100.0
+  }
+]

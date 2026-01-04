@@ -20,7 +20,7 @@ use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -58,6 +58,8 @@ pub struct TopologyConfig {
     pub ws_beta: f64,
     // Random parameters
     pub random_p: f64,
+    // Optional real-world edge list
+    pub real_world_path: Option<String>,
 }
 
 impl Default for TopologyConfig {
@@ -72,12 +74,14 @@ impl Default for TopologyConfig {
             ws_k: 6,
             ws_beta: 0.1,
             random_p: 0.05,
+            real_world_path: None,
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExperimentResult {
+    pub seed: u64,
     pub topology_type: TopologyType,
     pub num_nodes: usize,
     pub num_edges: usize,
@@ -90,12 +94,40 @@ pub struct ExperimentResult {
     pub total_optimal_hops: u32,
     pub avg_optimal_hops: f64,
     pub stretch_ratio: f64,
+    pub max_stretch: f64,
+    pub p95_stretch: f64,
+    pub p99_stretch: f64,
     pub gravity_hops: u32,
     pub pressure_hops: u32,
     pub tree_hops: u32,
     pub ttl_failures: usize,
     pub no_path_failures: usize,
     pub elapsed_ms: u128,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MetricSummary {
+    pub mean: f64,
+    pub ci95: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExperimentSummary {
+    pub topology_type: TopologyType,
+    pub success_rate: MetricSummary,
+    pub avg_hops: MetricSummary,
+    pub stretch_ratio: MetricSummary,
+    pub p95_stretch: MetricSummary,
+    pub p99_stretch: MetricSummary,
+    pub max_stretch: MetricSummary,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SummaryReport {
+    pub nodes_per_topology: usize,
+    pub tests_per_topology: usize,
+    pub seeds: Vec<u64>,
+    pub summaries: Vec<ExperimentSummary>,
 }
 
 impl std::fmt::Display for ExperimentResult {
@@ -113,6 +145,8 @@ impl std::fmt::Display for ExperimentResult {
         writeln!(f, "  Avg hops:           {:.2}", self.avg_hops)?;
         writeln!(f, "  Avg optimal hops:   {:.2}", self.avg_optimal_hops)?;
         writeln!(f, "  Stretch ratio:      {:.3}", self.stretch_ratio)?;
+        writeln!(f, "  Stretch p95/p99:    {:.3} / {:.3}", self.p95_stretch, self.p99_stretch)?;
+        writeln!(f, "  Max stretch:        {:.3}", self.max_stretch)?;
         writeln!(f, "Mode Distribution:")?;
         writeln!(f, "  Gravity hops:       {}", self.gravity_hops)?;
         writeln!(f, "  Pressure hops:      {}", self.pressure_hops)?;
@@ -302,8 +336,19 @@ fn generate_random(config: &TopologyConfig) -> GPRouter {
 
 /// Generate Real-World inspired topology (combination of BA + community structure)
 fn generate_real_world(config: &TopologyConfig) -> GPRouter {
+    if let Some(path) = &config.real_world_path {
+        match load_edge_list(path) {
+            Ok((nodes, adjacency_idx)) => {
+                return build_router_from_adjacency(config, &nodes, &adjacency_idx);
+            }
+            Err(err) => {
+                println!("Failed to load edge list ({}). Falling back to synthetic: {}", path, err);
+            }
+        }
+    }
+
     let mut rng = StdRng::seed_from_u64(config.seed);
-    let num_communities = (config.num_nodes as f64).sqrt().ceil() as usize;
+    let num_communities = (config.num_nodes as f64).sqrt().ceil() as usize;     
     let nodes_per_community = config.num_nodes / num_communities;
     
     let mut adjacency_idx: Vec<Vec<usize>> = vec![Vec::new(); config.num_nodes];
@@ -355,6 +400,64 @@ fn generate_real_world(config: &TopologyConfig) -> GPRouter {
         .collect();
 
     build_router_from_adjacency(config, &nodes, &adjacency_idx)
+}
+
+fn load_edge_list(path: &str) -> Result<(Vec<NodeId>, Vec<Vec<usize>>), String> {
+    let file = File::open(path).map_err(|e| format!("open failed: {}", e))?;
+    let reader = BufReader::new(file);
+
+    let mut id_map: HashMap<String, usize> = HashMap::new();
+    let mut nodes: Vec<NodeId> = Vec::new();
+    let mut adjacency_sets: Vec<HashSet<usize>> = Vec::new();
+
+    for line in reader.lines() {
+        let line = line.map_err(|e| format!("read failed: {}", e))?;
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with('%') {
+            continue;
+        }
+
+        let parts: Vec<&str> = trimmed
+            .split(|c: char| c.is_whitespace() || c == ',')
+            .filter(|p| !p.is_empty())
+            .collect();
+        if parts.len() < 2 {
+            continue;
+        }
+
+        let u = parts[0].to_string();
+        let v = parts[1].to_string();
+        if u == v {
+            continue;
+        }
+
+        let u_idx = *id_map.entry(u.clone()).or_insert_with(|| {
+            let idx = nodes.len();
+            nodes.push(NodeId::new(u));
+            adjacency_sets.push(HashSet::new());
+            idx
+        });
+        let v_idx = *id_map.entry(v.clone()).or_insert_with(|| {
+            let idx = nodes.len();
+            nodes.push(NodeId::new(v));
+            adjacency_sets.push(HashSet::new());
+            idx
+        });
+
+        adjacency_sets[u_idx].insert(v_idx);
+        adjacency_sets[v_idx].insert(u_idx);
+    }
+
+    if nodes.is_empty() {
+        return Err("edge list contained no nodes".to_string());
+    }
+
+    let adjacency_idx = adjacency_sets
+        .into_iter()
+        .map(|set| set.into_iter().collect())
+        .collect();
+
+    Ok((nodes, adjacency_idx))
 }
 
 /// Build GPRouter from adjacency list using PIE embedding
@@ -462,13 +565,13 @@ fn run_experiment(config: &TopologyConfig) -> ExperimentResult {
     println!("  Generated in {} ms", gen_time);
     println!("  Nodes: {}, Edges: {}", router.node_count(), router.edge_count());
 
+    let node_ids = router.node_ids();
+    let actual_nodes = node_ids.len();
+
     println!("Running {} routing tests...", config.num_tests);
     let test_start = Instant::now();
-    
+
     let mut rng = StdRng::seed_from_u64(config.seed + 1000);
-    let node_ids: Vec<NodeId> = (0..config.num_nodes)
-        .map(|i| NodeId::new(format!("node_{}", i)))
-        .collect();
 
     let mut successful = 0;
     let mut failed = 0;
@@ -479,12 +582,14 @@ fn run_experiment(config: &TopologyConfig) -> ExperimentResult {
     let mut total_optimal_hops = 0u32;
     let mut ttl_failures = 0;
     let mut no_path_failures = 0;
+    let mut stretch_samples: Vec<f64> = Vec::with_capacity(config.num_tests);
+    let mut max_stretch = 0.0f64;
 
     for _ in 0..config.num_tests {
-        let src_idx = rng.gen_range(0..config.num_nodes);
-        let mut dst_idx = rng.gen_range(0..config.num_nodes);
+        let src_idx = rng.gen_range(0..actual_nodes);
+        let mut dst_idx = rng.gen_range(0..actual_nodes);
         while dst_idx == src_idx {
-            dst_idx = rng.gen_range(0..config.num_nodes);
+            dst_idx = rng.gen_range(0..actual_nodes);
         }
 
         let source = &node_ids[src_idx];
@@ -507,6 +612,13 @@ fn run_experiment(config: &TopologyConfig) -> ExperimentResult {
 
                 if let Some(opt) = bfs_shortest_path(&router, source, dest) {
                     total_optimal_hops += opt;
+                    if opt > 0 {
+                        let stretch = result.hops as f64 / opt as f64;
+                        stretch_samples.push(stretch);
+                        if stretch > max_stretch {
+                            max_stretch = stretch;
+                        }
+                    }
                 }
             } else {
                 failed += 1;
@@ -543,10 +655,12 @@ fn run_experiment(config: &TopologyConfig) -> ExperimentResult {
     } else {
         0.0
     };
+    let (p95_stretch, p99_stretch) = stretch_percentiles(&stretch_samples);
 
     ExperimentResult {
+        seed: config.seed,
         topology_type: config.topology_type,
-        num_nodes: config.num_nodes,
+        num_nodes: actual_nodes,
         num_edges: router.edge_count(),
         num_tests: config.num_tests,
         successful_deliveries: successful,
@@ -557,6 +671,9 @@ fn run_experiment(config: &TopologyConfig) -> ExperimentResult {
         total_optimal_hops,
         avg_optimal_hops,
         stretch_ratio,
+        max_stretch,
+        p95_stretch,
+        p99_stretch,
         gravity_hops,
         pressure_hops,
         tree_hops,
@@ -564,6 +681,140 @@ fn run_experiment(config: &TopologyConfig) -> ExperimentResult {
         no_path_failures,
         elapsed_ms: elapsed,
     }
+}
+
+fn stretch_percentiles(samples: &[f64]) -> (f64, f64) {
+    if samples.is_empty() {
+        return (0.0, 0.0);
+    }
+    let mut sorted = samples.to_vec();
+    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let p95 = percentile_sorted(&sorted, 0.95);
+    let p99 = percentile_sorted(&sorted, 0.99);
+    (p95, p99)
+}
+
+fn percentile_sorted(sorted: &[f64], p: f64) -> f64 {
+    if sorted.is_empty() {
+        return 0.0;
+    }
+    let idx = ((sorted.len() - 1) as f64 * p).round() as usize;
+    sorted[idx.min(sorted.len() - 1)]
+}
+
+fn mean_std(values: &[f64]) -> (f64, f64) {
+    if values.is_empty() {
+        return (0.0, 0.0);
+    }
+    let mean = values.iter().sum::<f64>() / values.len() as f64;
+    if values.len() < 2 {
+        return (mean, 0.0);
+    }
+    let var = values
+        .iter()
+        .map(|v| {
+            let diff = v - mean;
+            diff * diff
+        })
+        .sum::<f64>()
+        / (values.len() as f64 - 1.0);
+    (mean, var.sqrt())
+}
+
+fn t_critical_95(df: usize) -> f64 {
+    match df {
+        1 => 12.706,
+        2 => 4.303,
+        3 => 3.182,
+        4 => 2.776,
+        5 => 2.571,
+        6 => 2.447,
+        7 => 2.365,
+        8 => 2.306,
+        9 => 2.262,
+        10 => 2.228,
+        11 => 2.201,
+        12 => 2.179,
+        13 => 2.160,
+        14 => 2.145,
+        15 => 2.131,
+        16 => 2.120,
+        17 => 2.110,
+        18 => 2.101,
+        19 => 2.093,
+        20 => 2.086,
+        21 => 2.080,
+        22 => 2.074,
+        23 => 2.069,
+        24 => 2.064,
+        25 => 2.060,
+        26 => 2.056,
+        27 => 2.052,
+        28 => 2.048,
+        29 => 2.045,
+        30 => 2.042,
+        _ => 1.96,
+    }
+}
+
+fn metric_summary(values: &[f64]) -> MetricSummary {
+    let (mean, std_dev) = mean_std(values);
+    if values.len() < 2 {
+        return MetricSummary { mean, ci95: 0.0 };
+    }
+    let t = t_critical_95(values.len() - 1);
+    let ci95 = t * std_dev / (values.len() as f64).sqrt();
+    MetricSummary { mean, ci95 }
+}
+
+fn summarize_results(results: &[ExperimentResult]) -> Vec<ExperimentSummary> {
+    let mut by_key: HashMap<String, Vec<&ExperimentResult>> = HashMap::new();
+    for result in results {
+        let key = format!("{}", result.topology_type);
+        by_key.entry(key).or_default().push(result);
+    }
+
+    let mut keys: Vec<String> = by_key.keys().cloned().collect();
+    keys.sort();
+
+    let mut summaries = Vec::new();
+    for key in keys {
+        let items = &by_key[&key];
+        if items.is_empty() {
+            continue;
+        }
+        let first = items[0];
+        let values = |f: fn(&ExperimentResult) -> f64| {
+            items.iter().map(|r| f(r)).collect::<Vec<f64>>()
+        };
+
+        summaries.push(ExperimentSummary {
+            topology_type: first.topology_type,
+            success_rate: metric_summary(&values(|r| r.success_rate)),
+            avg_hops: metric_summary(&values(|r| r.avg_hops)),
+            stretch_ratio: metric_summary(&values(|r| r.stretch_ratio)),
+            p95_stretch: metric_summary(&values(|r| r.p95_stretch)),
+            p99_stretch: metric_summary(&values(|r| r.p99_stretch)),
+            max_stretch: metric_summary(&values(|r| r.max_stretch)),
+        });
+    }
+
+    summaries
+}
+
+fn derive_summary_path(output_file: &str) -> String {
+    if let Some(stripped) = output_file.strip_suffix(".json") {
+        format!("{}_summary.json", stripped)
+    } else {
+        format!("{}_summary.json", output_file)
+    }
+}
+
+fn parse_seed_list(input: &str) -> Vec<u64> {
+    input
+        .split(',')
+        .filter_map(|s| s.trim().parse::<u64>().ok())
+        .collect()
 }
 
 fn main() {
@@ -575,6 +826,10 @@ fn main() {
     let mut num_nodes = 100;
     let mut num_tests = 1000;
     let mut output_file = "topology_experiments.json".to_string();
+    let mut seed = 42u64;
+    let mut seeds_override: Option<Vec<u64>> = None;
+    let mut summary_output: Option<String> = None;
+    let mut edge_list_path: Option<String> = None;
 
     let mut i = 1;
     while i < args.len() {
@@ -597,6 +852,33 @@ fn main() {
                     i += 1;
                 }
             }
+            "--seed" => {
+                if i + 1 < args.len() {
+                    seed = args[i + 1].parse().unwrap_or(seed);
+                    i += 1;
+                }
+            }
+            "--seeds" => {
+                if i + 1 < args.len() {
+                    let parsed = parse_seed_list(&args[i + 1]);
+                    if !parsed.is_empty() {
+                        seeds_override = Some(parsed);
+                    }
+                    i += 1;
+                }
+            }
+            "--summary-output" => {
+                if i + 1 < args.len() {
+                    summary_output = Some(args[i + 1].clone());
+                    i += 1;
+                }
+            }
+            "--edge-list" => {
+                if i + 1 < args.len() {
+                    edge_list_path = Some(args[i + 1].clone());
+                    i += 1;
+                }
+            }
             "--help" | "-h" => {
                 println!("Usage: topology_experiments [OPTIONS]");
                 println!();
@@ -604,6 +886,10 @@ fn main() {
                 println!("  -n, --nodes NUM    Number of nodes (default: 100)");
                 println!("  -t, --tests NUM    Number of routing tests per topology (default: 1000)");
                 println!("  -o, --output FILE  Output JSON file (default: topology_experiments.json)");
+                println!("      --seed NUM     Random seed (default: 42)");
+                println!("      --seeds LIST   Comma-separated seeds (overrides --seed)");
+                println!("      --summary-output FILE  Summary JSON output (optional)");
+                println!("      --edge-list FILE  Real-world edge list file for Real-World topology");
                 println!("  -h, --help         Show this help");
                 return;
             }
@@ -616,6 +902,14 @@ fn main() {
     println!("  Nodes per topology: {}", num_nodes);
     println!("  Tests per topology: {}", num_tests);
     println!("  Output file:        {}", output_file);
+    if let Some(path) = &edge_list_path {
+        println!("  Real-world edge list: {}", path);
+    }
+    let seeds = seeds_override.unwrap_or_else(|| vec![seed]);
+    println!("  Seeds:              {:?}", seeds);
+    if let Some(path) = &summary_output {
+        println!("  Summary output:     {}", path);
+    }
     println!();
 
     let topologies = vec![
@@ -628,27 +922,34 @@ fn main() {
 
     let mut all_results = Vec::new();
 
-    for topology_type in topologies {
-        println!("\n{}", "=".repeat(60));
-        println!("Experiment: {} Topology", topology_type);
-        println!("{}\n", "=".repeat(60));
+    for current_seed in &seeds {
+        if seeds.len() > 1 {
+            println!("\nSeed {}", current_seed);
+        }
 
-        let config = TopologyConfig {
-            topology_type,
-            num_nodes,
-            num_tests,
-            max_ttl: 100,
-            seed: 42,
-            ba_m: 3,
-            ws_k: 6,
-            ws_beta: 0.1,
-            random_p: 0.05,
-        };
+        for topology_type in &topologies {
+            println!("\n{}", "=".repeat(60));
+            println!("Experiment: {} Topology", topology_type);
+            println!("{}\n", "=".repeat(60));
 
-        let result = run_experiment(&config);
-        println!("\n{}", result);
-        
-        all_results.push(result);
+            let config = TopologyConfig {
+                topology_type: *topology_type,
+                num_nodes,
+                num_tests,
+                max_ttl: 100,
+                seed: *current_seed,
+                ba_m: 3,
+                ws_k: 6,
+                ws_beta: 0.1,
+                random_p: 0.05,
+                real_world_path: edge_list_path.clone(),
+            };
+
+            let result = run_experiment(&config);
+            println!("\n{}", result);
+
+            all_results.push(result);
+        }
     }
 
     // Save results to JSON
@@ -658,8 +959,26 @@ fn main() {
     let json = serde_json::to_string_pretty(&all_results).expect("Failed to serialize results");
     let mut file = File::create(&output_file).expect("Failed to create output file");
     file.write_all(json.as_bytes()).expect("Failed to write results");
-    
+
     println!("Results saved successfully!");
+
+    let summary_path = summary_output
+        .or_else(|| if seeds.len() > 1 { Some(derive_summary_path(&output_file)) } else { None });
+    if let Some(path) = summary_path {
+        let summaries = summarize_results(&all_results);
+        let report = SummaryReport {
+            nodes_per_topology: num_nodes,
+            tests_per_topology: num_tests,
+            seeds,
+            summaries,
+        };
+        let summary_json = serde_json::to_string_pretty(&report).expect("Failed to serialize summary");
+        let mut summary_file = File::create(&path).expect("Failed to create summary file");
+        summary_file
+            .write_all(summary_json.as_bytes())
+            .expect("Failed to write summary");
+        println!("Summary saved to {}", path);
+    }
 
     // Summary
     println!("\n{}", "=".repeat(60));

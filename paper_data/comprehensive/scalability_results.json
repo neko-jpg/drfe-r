@@ -1,0 +1,178 @@
+[
+  {
+    "nodes": 100,
+    "edges": 294,
+    "strategy": "PIE-DFS",
+    "success_rate": 1.0,
+    "stretch": 3.1446740858505566,
+    "max_stretch": 75.66666666666667,
+    "preprocessing_time_ms": 0,
+    "tz_build_time_ms": 0,
+    "routing_time_per_pair_us": 22.62
+  },
+  {
+    "nodes": 100,
+    "edges": 294,
+    "strategy": "PIE+TZ",
+    "success_rate": 1.0,
+    "stretch": 1.3012718600953894,
+    "max_stretch": 3.5,
+    "preprocessing_time_ms": 0,
+    "tz_build_time_ms": 4,
+    "routing_time_per_pair_us": 19.782
+  },
+  {
+    "nodes": 500,
+    "edges": 1494,
+    "strategy": "PIE-DFS",
+    "success_rate": 1.0,
+    "stretch": 45.01185277604492,
+    "max_stretch": 633.5,
+    "preprocessing_time_ms": 0,
+    "tz_build_time_ms": 0,
+    "routing_time_per_pair_us": 153.648
+  },
+  {
+    "nodes": 500,
+    "edges": 1494,
+    "strategy": "PIE+TZ",
+    "success_rate": 1.0,
+    "stretch": 1.3986275733000624,
+    "max_stretch": 4.0,
+    "preprocessing_time_ms": 0,
+    "tz_build_time_ms": 116,
+    "routing_time_per_pair_us": 102.274
+  },
+  {
+    "nodes": 1000,
+    "edges": 2994,
+    "strategy": "PIE-DFS",
+    "success_rate": 1.0,
+    "stretch": 119.56639722863741,
+    "max_stretch": 1682.3333333333333,
+    "preprocessing_time_ms": 1,
+    "tz_build_time_ms": 0,
+    "routing_time_per_pair_us": 351.37
+  },
+  {
+    "nodes": 1000,
+    "edges": 2994,
+    "strategy": "PIE+TZ",
+    "success_rate": 1.0,
+    "stretch": 1.3672055427251733,
+    "max_stretch": 3.5,
+    "preprocessing_time_ms": 1,
+    "tz_build_time_ms": 460,
+    "routing_time_per_pair_us": 187.218
+  },
+  {
+    "nodes": 2000,
+    "edges": 5994,
+    "strategy": "PIE-DFS",
+    "success_rate": 1.0,
+    "stretch": 287.4456989247312,
+    "max_stretch": 2575.5,
+    "preprocessing_time_ms": 3,
+    "tz_build_time_ms": 0,
+    "routing_time_per_pair_us": 977.62
+  },
+  {
+    "nodes": 2000,
+    "edges": 5994,
+    "strategy": "PIE+TZ",
+    "success_rate": 1.0,
+    "stretch": 1.3720430107526882,
+    "max_stretch": 3.5,
+    "preprocessing_time_ms": 3,
+    "tz_build_time_ms": 2137,
+    "routing_time_per_pair_us": 458.414
+  },
+  {
+    "nodes": 3000,
+    "edges": 8994,
+    "strategy": "PIE-DFS",
+    "success_rate": 1.0,
+    "stretch": 535.20103626943,
+    "max_stretch": 3977.0,
+    "preprocessing_time_ms": 6,
+    "tz_build_time_ms": 0,
+    "routing_time_per_pair_us": 1620.18
+  },
+  {
+    "nodes": 3000,
+    "edges": 8994,
+    "strategy": "PIE+TZ",
+    "success_rate": 1.0,
+    "stretch": 1.3466321243523316,
+    "max_stretch": 3.5,
+    "preprocessing_time_ms": 6,
+    "tz_build_time_ms": 4686,
+    "routing_time_per_pair_us": 632.746
+  },
+  {
+    "nodes": 5000,
+    "edges": 14994,
+    "strategy": "PIE-DFS",
+    "success_rate": 1.0,
+    "stretch": 926.0461538461539,
+    "max_stretch": 7432.0,
+    "preprocessing_time_ms": 11,
+    "tz_build_time_ms": 0,
+    "routing_time_per_pair_us": 3439.442
+  },
+  {
+    "nodes": 5000,
+    "edges": 14994,
+    "strategy": "PIE+TZ",
+    "success_rate": 1.0,
+    "stretch": 1.2933002481389577,
+    "max_stretch": 3.0,
+    "preprocessing_time_ms": 11,
+    "tz_build_time_ms": 15192,
+    "routing_time_per_pair_us": 1450.346
+  },
+  {
+    "nodes": 7000,
+    "edges": 20994,
+    "strategy": "PIE-DFS",
+    "success_rate": 1.0,
+    "stretch": 1241.6807896003852,
+    "max_stretch": 10680.333333333334,
+    "preprocessing_time_ms": 17,
+    "tz_build_time_ms": 0,
+    "routing_time_per_pair_us": 5102.778
+  },
+  {
+    "nodes": 7000,
+    "edges": 20994,
+    "strategy": "PIE+TZ",
+    "success_rate": 1.0,
+    "stretch": 1.2508425613866152,
+    "max_stretch": 3.5,
+    "preprocessing_time_ms": 17,
+    "tz_build_time_ms": 41272,
+    "routing_time_per_pair_us": 1895.224
+  },
+  {
+    "nodes": 10000,
+    "edges": 29994,
+    "strategy": "PIE-DFS",
+    "success_rate": 1.0,
+    "stretch": 1846.6922011998154,
+    "max_stretch": 13392.333333333334,
+    "preprocessing_time_ms": 34,
+    "tz_build_time_ms": 0,
+    "routing_time_per_pair_us": 11518.548
+  },
+  {
+    "nodes": 10000,
+    "edges": 29994,
+    "strategy": "PIE+TZ",
+    "success_rate": 1.0,
+    "stretch": 1.2468850946008307,
+    "max_stretch": 4.0,
+    "preprocessing_time_ms": 34,
+    "tz_build_time_ms": 122308,
+    "routing_time_per_pair_us": 2844.812
+  }
+]

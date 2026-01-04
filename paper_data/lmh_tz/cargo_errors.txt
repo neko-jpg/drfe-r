@@ -1,0 +1,36 @@
+﻿    Checking drfe_r v0.1.0 (/mnt/c/dev/network test)
+warning: unused import: `crate::greedy_embedding::GreedyEmbedding`
+  --> src/hierarchical.rs:10:5
+   |
+10 | use crate::greedy_embedding::GreedyEmbedding;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `std::f64::consts::PI`
+  --> src/hyperbolic_models.rs:12:5
+   |
+12 | use std::f64::consts::PI;
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> src/telemetry.rs:7:5
+  |
+7 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `crate::routing::RoutingMode`
+  --> src/telemetry.rs:10:5
+   |
+10 | use crate::routing::RoutingMode;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0063]: missing fields `tz_path` and `tz_path_index` in initializer of `PacketHeader`
+   --> src/network.rs:333:9
+    |
+333 |         crate::routing::PacketHeader {
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ missing `tz_path` and `tz_path_index`
+
+For more information about this error, try `rustc --explain E0063`.
+warning: `drfe_r` (lib) generated 4 warnings
+error: could not compile `drfe_r` (lib) due to 1 previous error; 4 warnings emitted

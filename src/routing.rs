@@ -17,8 +17,10 @@ pub enum RoutingMode {
     Gravity,
     /// Recovery mode: use pressure to escape local minimum
     Pressure,
-    /// Tree mode: use spanning tree structure for guaranteed delivery
+    /// Tree mode: use spanning tree structure for guaranteed delivery (DFS fallback)
     Tree,
+    /// Thorup-Zwick mode: use precomputed routing table with stretch ≤ 3 guarantee
+    ThorupZwick,
 }
 
 /// Result of a routing decision
@@ -55,6 +57,10 @@ pub struct PacketHeader {
     pub pressure_budget: u32,
     /// DFSバックトラック用スタック: 戻るべきノードのパス
     pub dfs_stack: Vec<NodeId>,
+    /// TZ routing: precomputed path to follow
+    pub tz_path: Vec<NodeId>,
+    /// TZ routing: current index in the path
+    pub tz_path_index: usize,
 }
 
 impl PacketHeader {
@@ -75,6 +81,8 @@ impl PacketHeader {
             recovery_threshold: f64::INFINITY, // 初期値は無限大
             pressure_budget: 0,
             dfs_stack: Vec::new(),
+            tz_path: Vec::new(),
+            tz_path_index: 0,
         }
     }
 
@@ -142,6 +150,8 @@ pub struct GPRouter {
     pressure_decay: f64,
     /// Pressure increment per visit
     pressure_increment: f64,
+    /// Optional Thorup-Zwick routing table for guaranteed stretch ≤ 3
+    tz_table: Option<crate::tz_routing::TZRoutingTable>,
 }
 
 impl GPRouter {
@@ -150,6 +160,7 @@ impl GPRouter {
             nodes: HashMap::new(),
             pressure_decay: 0.95,        // Slower decay to maintain pressure longer
             pressure_increment: 5.0,     // Stronger pressure to overcome distance
+            tz_table: None,
         }
     }
 
@@ -176,6 +187,21 @@ impl GPRouter {
     /// Get mutable reference to a node
     pub fn get_node_mut(&mut self, id: &NodeId) -> Option<&mut RoutingNode> {
         self.nodes.get_mut(id)
+    }
+
+    /// Set the Thorup-Zwick routing table for guaranteed stretch ≤ 3 fallback
+    pub fn set_tz_table(&mut self, table: crate::tz_routing::TZRoutingTable) {
+        self.tz_table = Some(table);
+    }
+
+    /// Check if TZ table is available
+    pub fn has_tz_table(&self) -> bool {
+        self.tz_table.is_some()
+    }
+
+    /// Get reference to TZ table
+    pub fn get_tz_table(&self) -> Option<&crate::tz_routing::TZRoutingTable> {
+        self.tz_table.as_ref()
     }
 
     /// Make routing decision for a packet at the current node
@@ -312,6 +338,63 @@ impl GPRouter {
                 // 3. Pressure実行
                 packet.pressure_budget -= 1;
                 return self.pressure_routing(current, packet);
+            },
+            RoutingMode::ThorupZwick => {
+                // ThorupZwick mode: Follow precomputed TZ path for guaranteed stretch ≤ 3
+                
+                // If TZ path is empty, compute it
+                if packet.tz_path.is_empty() {
+                    if let Some(tz_table) = &self.tz_table {
+                        if let Some(path) = tz_table.compute_path(current_node, &packet.destination) {
+                            packet.tz_path = path;
+                            packet.tz_path_index = 0;
+                        } else {
+                            // TZ path computation failed, try DFS fallback
+                            packet.mode = RoutingMode::Tree;
+                            return self.route(current_node, packet);
+                        }
+                    } else {
+                        // No TZ table available, fall back to Tree mode
+                        packet.mode = RoutingMode::Tree;
+                        return self.route(current_node, packet);
+                    }
+                }
+
+                // Find current position in TZ path
+                let current_pos = packet.tz_path.iter().position(|n| n == current_node);
+                if let Some(pos) = current_pos {
+                    packet.tz_path_index = pos;
+                }
+
+                // Get next hop from TZ path
+                let next_index = packet.tz_path_index + 1;
+                if next_index < packet.tz_path.len() {
+                    let next_hop = packet.tz_path[next_index].clone();
+                    packet.tz_path_index = next_index;
+                    
+                    // Check if next hop is neighbor
+                    if current.neighbors.contains(&next_hop) {
+                        return RoutingDecision::Forward {
+                            next_hop,
+                            mode: RoutingMode::ThorupZwick,
+                        };
+                    } else {
+                        // Next hop is not directly reachable, find path to it
+                        // Use local greedy toward next TZ waypoint
+                        if let Some(decision) = self.route_toward_node(current, &next_hop) {
+                            return decision;
+                        }
+                    }
+                }
+
+                // Path exhausted but destination not reached - unexpected
+                // Fall back to Tree mode
+                packet.mode = RoutingMode::Tree;
+                packet.tz_path.clear();
+                if let Some(decision) = self.traverse_graph_dfs(current, packet) {
+                    return decision;
+                }
+                return RoutingDecision::Failed { reason: "TZ routing exhausted".to_string() };
             }
         }
     }
@@ -340,6 +423,43 @@ impl GPRouter {
         best_neighbor.map(|next_hop| RoutingDecision::Forward {
             next_hop: next_hop.clone(),
             mode: RoutingMode::Gravity,
+        })
+    }
+
+    /// Route toward a specific node (used by TZ routing for waypoint navigation)
+    fn route_toward_node(
+        &self,
+        current: &RoutingNode,
+        target_node: &NodeId,
+    ) -> Option<RoutingDecision> {
+        // Check if target is a direct neighbor
+        if current.neighbors.contains(target_node) {
+            return Some(RoutingDecision::Forward {
+                next_hop: target_node.clone(),
+                mode: RoutingMode::ThorupZwick,
+            });
+        }
+
+        // Find neighbor closest to target node using BFS distance estimation
+        // For simplicity, we just pick any neighbor that might lead toward target
+        // In practice, this should use the TZ table's bunch information
+        
+        // Try to find neighbor with target in its bunch or neighbors
+        for neighbor_id in &current.neighbors {
+            if let Some(neighbor) = self.nodes.get(neighbor_id) {
+                if neighbor.neighbors.contains(target_node) {
+                    return Some(RoutingDecision::Forward {
+                        next_hop: neighbor_id.clone(),
+                        mode: RoutingMode::ThorupZwick,
+                    });
+                }
+            }
+        }
+
+        // Fallback: just pick first available neighbor
+        current.neighbors.first().map(|n| RoutingDecision::Forward {
+            next_hop: n.clone(),
+            mode: RoutingMode::ThorupZwick,
         })
     }
 
@@ -496,6 +616,7 @@ impl GPRouter {
                         RoutingMode::Gravity => gravity_hops += 1,
                         RoutingMode::Pressure => pressure_hops += 1,
                         RoutingMode::Tree => tree_hops += 1,
+                        RoutingMode::ThorupZwick => tree_hops += 1, // Count TZ hops as tree hops
                     }
                     path.push(next_hop.clone());
                     current = next_hop;

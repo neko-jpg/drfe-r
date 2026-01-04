@@ -1,0 +1,42 @@
+[
+  {
+    "nodes": 100,
+    "pie_embedding_ms": 0,
+    "tz_build_ms": 4,
+    "routing_decision_us": 0.44966,
+    "path_computation_us": 0.9591029999999999,
+    "total_preprocessing_ms": 4
+  },
+  {
+    "nodes": 500,
+    "pie_embedding_ms": 0,
+    "tz_build_ms": 115,
+    "routing_decision_us": 0.517415,
+    "path_computation_us": 1.1445239999999999,
+    "total_preprocessing_ms": 115
+  },
+  {
+    "nodes": 1000,
+    "pie_embedding_ms": 1,
+    "tz_build_ms": 433,
+    "routing_decision_us": 0.800393,
+    "path_computation_us": 1.470359,
+    "total_preprocessing_ms": 434
+  },
+  {
+    "nodes": 2000,
+    "pie_embedding_ms": 3,
+    "tz_build_ms": 1992,
+    "routing_decision_us": 1.4619490000000002,
+    "path_computation_us": 1.9098789999999999,
+    "total_preprocessing_ms": 1995
+  },
+  {
+    "nodes": 5000,
+    "pie_embedding_ms": 10,
+    "tz_build_ms": 13819,
+    "routing_decision_us": 1.319677,
+    "path_computation_us": 2.4982800000000003,
+    "total_preprocessing_ms": 13829
+  }
+]
