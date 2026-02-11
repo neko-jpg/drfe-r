@@ -1,5 +1,6 @@
 # DRFE-R: Compact Routing with Adversarial Churn Resilience
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18610072.svg)](https://doi.org/10.5281/zenodo.18610072)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -172,7 +173,8 @@ If you use this software, please cite:
   title  = {DRFE-R: Compact Routing with Adversarial Churn Resilience},
   author = {neko-jpg},
   year   = {2026},
-  url    = {https://github.com/neko-jpg/drfe-r}
+  doi    = {10.5281/zenodo.18610072},
+  url    = {https://doi.org/10.5281/zenodo.18610072}
 }
 ```
 
