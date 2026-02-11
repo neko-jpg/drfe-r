@@ -12,10 +12,11 @@
 //! - Average hop count
 //! - Stretch ratio (actual hops / shortest path hops)
 
+
 use drfe_r::coordinates::{NodeId, RoutingCoordinate};
 use drfe_r::greedy_embedding::GreedyEmbedding;
-use drfe_r::landmark_routing::{LandmarkRoutingConfig, LandmarkRoutingTable};
 use drfe_r::routing::{GPRouter, RoutingNode};
+use drfe_r::tz_routing::{TZConfig, TZRoutingTable};
 use drfe_r::PoincareDiskPoint;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -53,7 +54,6 @@ pub struct TopologyConfig {
     pub max_ttl: u32,
     pub seed: u64,
     pub routing_algorithm: RoutingAlgorithm,
-    pub landmark_config: LandmarkRoutingConfig,
     // BA parameters
     pub ba_m: usize,
     // WS parameters
@@ -74,7 +74,6 @@ impl Default for TopologyConfig {
             max_ttl: 100,
             seed: 42,
             routing_algorithm: RoutingAlgorithm::Baseline,
-            landmark_config: LandmarkRoutingConfig::default(),
             ba_m: 3,
             ws_k: 6,
             ws_beta: 0.1,
@@ -87,14 +86,14 @@ impl Default for TopologyConfig {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RoutingAlgorithm {
     Baseline,
-    Landmark,
+    TZ,  // Thorup-Zwick routing with 100% delivery guarantee
 }
 
 impl std::fmt::Display for RoutingAlgorithm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             RoutingAlgorithm::Baseline => write!(f, "baseline"),
-            RoutingAlgorithm::Landmark => write!(f, "landmark"),
+            RoutingAlgorithm::TZ => write!(f, "tz"),
         }
     }
 }
@@ -541,16 +540,24 @@ fn build_router_from_adjacency(
         }
     }
 
-    if config.routing_algorithm == RoutingAlgorithm::Landmark {
-        match LandmarkRoutingTable::build(&adjacency, &config.landmark_config) {
-            Ok(table) => {
-                router.enable_landmark_routing(table, config.landmark_config.clone());
+    // Enable TZ routing for guaranteed delivery (100% success rate)
+    if config.routing_algorithm == RoutingAlgorithm::TZ {
+        let tz_config = TZConfig {
+            num_landmarks: None,  // Auto: sqrt(n)
+            seed: config.seed,
+        };
+        
+        match TZRoutingTable::build(&adjacency, tz_config) {
+            Ok(tz_table) => {
+                println!(
+                    "  TZ table built: {} landmarks, {} memory entries",
+                    tz_table.landmarks.len(),
+                    tz_table.memory_usage()
+                );
+                router.set_tz_table(tz_table);
             }
             Err(err) => {
-                println!(
-                    "Failed to build landmark routing table: {}. Using baseline routing.",
-                    err
-                );
+                eprintln!("Warning: TZ table build failed: {}. Using baseline routing.", err);
             }
         }
     }
@@ -865,7 +872,6 @@ fn main() {
     let mut summary_output: Option<String> = None;
     let mut edge_list_path: Option<String> = None;
     let mut routing_algorithm = RoutingAlgorithm::Baseline;
-    let mut landmark_config = LandmarkRoutingConfig::default();
 
     let mut i = 1;
     while i < args.len() {
@@ -919,50 +925,13 @@ fn main() {
                 if i + 1 < args.len() {
                     routing_algorithm = match args[i + 1].as_str() {
                         "baseline" => RoutingAlgorithm::Baseline,
-                        "landmark" | "real" => RoutingAlgorithm::Landmark,
+                        "tz" => RoutingAlgorithm::TZ,
                         _ => routing_algorithm,
                     };
                     i += 1;
                 }
             }
-            "--landmarks" => {
-                if i + 1 < args.len() {
-                    if let Ok(count) = args[i + 1].parse::<usize>() {
-                        if count > 0 {
-                            landmark_config.num_landmarks = Some(count);
-                        }
-                    }
-                    i += 1;
-                }
-            }
-            "--lookahead-depth" => {
-                if i + 1 < args.len() {
-                    landmark_config.lookahead_depth =
-                        args[i + 1].parse().unwrap_or(landmark_config.lookahead_depth);
-                    i += 1;
-                }
-            }
-            "--lookahead-max" => {
-                if i + 1 < args.len() {
-                    landmark_config.lookahead_max_nodes =
-                        args[i + 1].parse().unwrap_or(landmark_config.lookahead_max_nodes);
-                    i += 1;
-                }
-            }
-            "--landmark-weight" => {
-                if i + 1 < args.len() {
-                    landmark_config.landmark_weight =
-                        args[i + 1].parse().unwrap_or(landmark_config.landmark_weight);
-                    i += 1;
-                }
-            }
-            "--hyper-weight" => {
-                if i + 1 < args.len() {
-                    landmark_config.hyperbolic_weight =
-                        args[i + 1].parse().unwrap_or(landmark_config.hyperbolic_weight);
-                    i += 1;
-                }
-            }
+
             "--help" | "-h" => {
                 println!("Usage: topology_experiments [OPTIONS]");
                 println!();
@@ -974,12 +943,7 @@ fn main() {
                 println!("      --seeds LIST   Comma-separated seeds (overrides --seed)");
                 println!("      --summary-output FILE  Summary JSON output (optional)");
                 println!("      --edge-list FILE  Real-world edge list file for Real-World topology");
-                println!("      --routing MODE  Routing algorithm: baseline, landmark");
-                println!("      --landmarks NUM  Number of landmarks (default: auto)");
-                println!("      --lookahead-depth NUM  Lookahead BFS depth (default: 3)");
-                println!("      --lookahead-max NUM  Lookahead BFS node cap (default: 5000)");
-                println!("      --landmark-weight NUM  Landmark distance weight (default: 1.0)");
-                println!("      --hyper-weight NUM  Hyperbolic distance weight (default: 0.15)");
+                println!("      --routing MODE  Routing algorithm: baseline (default), tz (100% guarantee)");
                 println!("  -h, --help         Show this help");
                 return;
             }
@@ -996,17 +960,6 @@ fn main() {
         println!("  Real-world edge list: {}", path);
     }
     println!("  Routing algorithm:  {}", routing_algorithm);
-    if routing_algorithm == RoutingAlgorithm::Landmark {
-        let landmark_count = landmark_config
-            .num_landmarks
-            .map(|v| v.to_string())
-            .unwrap_or_else(|| "auto".to_string());
-        println!("  Landmarks:          {}", landmark_count);
-        println!("  Lookahead depth:    {}", landmark_config.lookahead_depth);
-        println!("  Lookahead max:      {}", landmark_config.lookahead_max_nodes);
-        println!("  Landmark weight:    {}", landmark_config.landmark_weight);
-        println!("  Hyper weight:       {}", landmark_config.hyperbolic_weight);
-    }
     let seeds = seeds_override.unwrap_or_else(|| vec![seed]);
     println!("  Seeds:              {:?}", seeds);
     if let Some(path) = &summary_output {
@@ -1041,7 +994,6 @@ fn main() {
                 max_ttl: 100,
                 seed: *current_seed,
                 routing_algorithm,
-                landmark_config: landmark_config.clone(),
                 ba_m: 3,
                 ws_k: 6,
                 ws_beta: 0.1,

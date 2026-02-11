@@ -26,6 +26,7 @@ pub mod sybil;
 pub mod telemetry;
 pub mod tls;
 pub mod tz_routing;
+pub mod hyper_press;
 
 
 use serde::{Deserialize, Serialize};

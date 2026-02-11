@@ -102,7 +102,20 @@ impl TZRoutingTable {
         let mut node_info: HashMap<NodeId, TZNodeInfo> = HashMap::new();
         let mut to_landmark_next_hop: HashMap<NodeId, NodeId> = HashMap::new();
 
-        for node in adjacency.keys() {
+        // Optimization: Skip bunch computation for very large graphs
+        // Bunch computation is O(n² × m) which is infeasible for large graphs
+        let compute_bunches = n <= 10000;
+        
+        if !compute_bunches {
+            eprintln!("  Large graph detected ({} nodes). Skipping bunch computation for efficiency.", n);
+        }
+
+        for (idx, node) in adjacency.keys().enumerate() {
+            // Progress indicator for large graphs
+            if n > 10000 && idx % 10000 == 0 {
+                eprintln!("  Processing node {}/{}", idx, n);
+            }
+            
             // Find closest landmark
             let mut closest_landmark = landmarks[0].clone();
             let mut min_distance = u32::MAX;
@@ -118,18 +131,25 @@ impl TZRoutingTable {
                 }
             }
 
-            // Compute bunch: all nodes w such that d(node, w) < d(node, closest_landmark)
-            let (node_distances, node_parents) = Self::bfs_with_parents(adjacency, node);
-            let mut bunch: HashMap<NodeId, (u32, NodeId)> = HashMap::new();
+            // Compute bunch only for small graphs
+            let bunch = if compute_bunches {
+                // Compute bunch: all nodes w such that d(node, w) < d(node, closest_landmark)
+                let (node_distances, node_parents) = Self::bfs_with_parents(adjacency, node);
+                let mut bunch: HashMap<NodeId, (u32, NodeId)> = HashMap::new();
 
-            for (w, &dist) in &node_distances {
-                if dist < min_distance {
-                    // w is in the bunch
-                    // Find next hop toward w
-                    let next_hop = Self::find_next_hop_from_parents(node, w, &node_parents);
-                    bunch.insert(w.clone(), (dist, next_hop));
+                for (w, &dist) in &node_distances {
+                    if dist < min_distance {
+                        // w is in the bunch
+                        // Find next hop toward w
+                        let next_hop = Self::find_next_hop_from_parents(node, w, &node_parents);
+                        bunch.insert(w.clone(), (dist, next_hop));
+                    }
                 }
-            }
+                bunch
+            } else {
+                // For large graphs, use empty bunch (rely on landmark routing only)
+                HashMap::new()
+            };
 
             // Compute next hop toward closest landmark
             if let Some(parents) = landmark_parent.get(&closest_landmark) {

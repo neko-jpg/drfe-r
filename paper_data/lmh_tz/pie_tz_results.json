@@ -52,7 +52,7 @@
     "gravity_pct": 49.15336236090953,
     "tz_pct": 50.84663763909047,
     "embedding_time_ms": 0,
-    "tz_build_time_ms": 43,
+    "tz_build_time_ms": 39,
     "tz_memory_entries": 2008
   },
   {
@@ -80,7 +80,7 @@
     "gravity_pct": 47.01159678858162,
     "tz_pct": 52.98840321141838,
     "embedding_time_ms": 0,
-    "tz_build_time_ms": 132,
+    "tz_build_time_ms": 126,
     "tz_memory_entries": 4054
   },
   {
@@ -108,7 +108,7 @@
     "gravity_pct": 44.5945945945946,
     "tz_pct": 55.4054054054054,
     "embedding_time_ms": 1,
-    "tz_build_time_ms": 495,
+    "tz_build_time_ms": 610,
     "tz_memory_entries": 11923
   },
   {
@@ -116,10 +116,10 @@
     "strategy": "PIE-DFS",
     "num_tests": 500,
     "success_rate": 1.0,
-    "avg_hops": 1069.298,
-    "stretch": 287.4456989247312,
-    "max_stretch": 2575.5,
-    "gravity_pct": 0.2313667471556105,
+    "avg_hops": 1195.246,
+    "stretch": 321.302688172043,
+    "max_stretch": 1942.0,
+    "gravity_pct": 0.20916196331131834,
     "tz_pct": 0.0,
     "embedding_time_ms": 3,
     "tz_build_time_ms": 0,
@@ -130,13 +130,13 @@
     "strategy": "PIE+TZ",
     "num_tests": 500,
     "success_rate": 1.0,
-    "avg_hops": 5.104,
-    "stretch": 1.3720430107526882,
+    "avg_hops": 5.036,
+    "stretch": 1.353763440860215,
     "max_stretch": 3.5,
-    "gravity_pct": 42.94670846394985,
-    "tz_pct": 57.05329153605015,
+    "gravity_pct": 43.28832406671962,
+    "tz_pct": 56.71167593328038,
     "embedding_time_ms": 3,
-    "tz_build_time_ms": 2125,
+    "tz_build_time_ms": 2305,
     "tz_memory_entries": 32797
   },
   {
@@ -164,7 +164,7 @@
     "gravity_pct": 41.97768372450943,
     "tz_pct": 58.02231627549057,
     "embedding_time_ms": 5,
-    "tz_build_time_ms": 4137,
+    "tz_build_time_ms": 4531,
     "tz_memory_entries": 57733
   }
 ]

@@ -637,7 +637,7 @@ impl GPRouter {
             RoutingMode::HyperPress => {
                 // HYPER-PRESS mode: Use H^2 coordinates + Laplacian potential
                 if let Some(hp) = &self.hyper_press {
-                    // Use FAST local-potential version (scales to large graphs, uses φ descent priority)
+                    // Use FAST local-potential version (scales to large graphs, avoids global φ collapse)
                     if let Some(next_hop) = hp.find_best_neighbor_fast(
                         current_node,
                         &packet.destination,
@@ -1029,7 +1029,6 @@ mod tests {
         assert!(result.failure_reason.is_some());
     }
 }
-
 
 
 
