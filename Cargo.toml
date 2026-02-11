@@ -29,6 +29,7 @@ governor = "0.6"
 nonzero_ext = "0.3"
 dashmap = "5.5"
 crossbeam = "0.8"
+rayon = "1.10"
 opentelemetry = "0.21"
 opentelemetry_sdk = "0.21"
 opentelemetry-stdout = "0.2"
@@ -87,6 +88,14 @@ path = "src/bin/debug_failures.rs"
 [[bin]]
 name = "stretch_benchmark"
 path = "src/bin/stretch_benchmark.rs"
+
+[[bin]]
+name = "large_topology_benchmark"
+path = "src/bin/large_topology_benchmark.rs"
+
+[[bin]]
+name = "dynamic_network_experiment"
+path = "src/bin/dynamic_network_experiment.rs"
 
 [[bench]]
 name = "routing_latency"

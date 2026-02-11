@@ -8,18 +8,18 @@
     "max_stretch": 75.66666666666667,
     "preprocessing_time_ms": 0,
     "tz_build_time_ms": 0,
-    "routing_time_per_pair_us": 22.62
+    "routing_time_per_pair_us": 25.912
   },
   {
     "nodes": 100,
     "edges": 294,
     "strategy": "PIE+TZ",
     "success_rate": 1.0,
-    "stretch": 1.3012718600953894,
-    "max_stretch": 3.5,
+    "stretch": 1.4435612082670906,
+    "max_stretch": 4.0,
     "preprocessing_time_ms": 0,
-    "tz_build_time_ms": 4,
-    "routing_time_per_pair_us": 19.782
+    "tz_build_time_ms": 6,
+    "routing_time_per_pair_us": 23.01
   },
   {
     "nodes": 500,
@@ -28,20 +28,20 @@
     "success_rate": 1.0,
     "stretch": 45.01185277604492,
     "max_stretch": 633.5,
-    "preprocessing_time_ms": 0,
+    "preprocessing_time_ms": 1,
     "tz_build_time_ms": 0,
-    "routing_time_per_pair_us": 153.648
+    "routing_time_per_pair_us": 195.06
   },
   {
     "nodes": 500,
     "edges": 1494,
     "strategy": "PIE+TZ",
     "success_rate": 1.0,
-    "stretch": 1.3986275733000624,
-    "max_stretch": 4.0,
-    "preprocessing_time_ms": 0,
-    "tz_build_time_ms": 116,
-    "routing_time_per_pair_us": 102.274
+    "stretch": 1.6918278228321897,
+    "max_stretch": 4.5,
+    "preprocessing_time_ms": 1,
+    "tz_build_time_ms": 29,
+    "routing_time_per_pair_us": 107.964
   },
   {
     "nodes": 1000,
@@ -52,18 +52,18 @@
     "max_stretch": 1682.3333333333333,
     "preprocessing_time_ms": 1,
     "tz_build_time_ms": 0,
-    "routing_time_per_pair_us": 351.37
+    "routing_time_per_pair_us": 394.53
   },
   {
     "nodes": 1000,
     "edges": 2994,
     "strategy": "PIE+TZ",
     "success_rate": 1.0,
-    "stretch": 1.3672055427251733,
-    "max_stretch": 3.5,
+    "stretch": 1.699769053117783,
+    "max_stretch": 4.5,
     "preprocessing_time_ms": 1,
-    "tz_build_time_ms": 460,
-    "routing_time_per_pair_us": 187.218
+    "tz_build_time_ms": 117,
+    "routing_time_per_pair_us": 203.882
   },
   {
     "nodes": 2000,
@@ -72,20 +72,20 @@
     "success_rate": 1.0,
     "stretch": 287.4456989247312,
     "max_stretch": 2575.5,
-    "preprocessing_time_ms": 3,
+    "preprocessing_time_ms": 4,
     "tz_build_time_ms": 0,
-    "routing_time_per_pair_us": 977.62
+    "routing_time_per_pair_us": 1081.834
   },
   {
     "nodes": 2000,
     "edges": 5994,
     "strategy": "PIE+TZ",
     "success_rate": 1.0,
-    "stretch": 1.3720430107526882,
-    "max_stretch": 3.5,
-    "preprocessing_time_ms": 3,
-    "tz_build_time_ms": 2137,
-    "routing_time_per_pair_us": 458.414
+    "stretch": 1.7301075268817205,
+    "max_stretch": 4.5,
+    "preprocessing_time_ms": 4,
+    "tz_build_time_ms": 607,
+    "routing_time_per_pair_us": 512.248
   },
   {
     "nodes": 3000,
@@ -94,20 +94,20 @@
     "success_rate": 1.0,
     "stretch": 535.20103626943,
     "max_stretch": 3977.0,
-    "preprocessing_time_ms": 6,
+    "preprocessing_time_ms": 8,
     "tz_build_time_ms": 0,
-    "routing_time_per_pair_us": 1620.18
+    "routing_time_per_pair_us": 2151.826
   },
   {
     "nodes": 3000,
     "edges": 8994,
     "strategy": "PIE+TZ",
     "success_rate": 1.0,
-    "stretch": 1.3466321243523316,
-    "max_stretch": 3.5,
-    "preprocessing_time_ms": 6,
-    "tz_build_time_ms": 4686,
-    "routing_time_per_pair_us": 632.746
+    "stretch": 1.7528497409326425,
+    "max_stretch": 4.5,
+    "preprocessing_time_ms": 8,
+    "tz_build_time_ms": 1311,
+    "routing_time_per_pair_us": 801.74
   },
   {
     "nodes": 5000,
@@ -116,20 +116,20 @@
     "success_rate": 1.0,
     "stretch": 926.0461538461539,
     "max_stretch": 7432.0,
-    "preprocessing_time_ms": 11,
+    "preprocessing_time_ms": 19,
     "tz_build_time_ms": 0,
-    "routing_time_per_pair_us": 3439.442
+    "routing_time_per_pair_us": 5760.752
   },
   {
     "nodes": 5000,
     "edges": 14994,
     "strategy": "PIE+TZ",
     "success_rate": 1.0,
-    "stretch": 1.2933002481389577,
-    "max_stretch": 3.0,
-    "preprocessing_time_ms": 11,
-    "tz_build_time_ms": 15192,
-    "routing_time_per_pair_us": 1450.346
+    "stretch": 1.7027295285359803,
+    "max_stretch": 3.6666666666666665,
+    "preprocessing_time_ms": 19,
+    "tz_build_time_ms": 9411,
+    "routing_time_per_pair_us": 2502.392
   },
   {
     "nodes": 7000,
@@ -138,20 +138,20 @@
     "success_rate": 1.0,
     "stretch": 1241.6807896003852,
     "max_stretch": 10680.333333333334,
-    "preprocessing_time_ms": 17,
+    "preprocessing_time_ms": 29,
     "tz_build_time_ms": 0,
-    "routing_time_per_pair_us": 5102.778
+    "routing_time_per_pair_us": 5553.46
   },
   {
     "nodes": 7000,
     "edges": 20994,
     "strategy": "PIE+TZ",
     "success_rate": 1.0,
-    "stretch": 1.2508425613866152,
-    "max_stretch": 3.5,
-    "preprocessing_time_ms": 17,
-    "tz_build_time_ms": 41272,
-    "routing_time_per_pair_us": 1895.224
+    "stretch": 1.6629754453538759,
+    "max_stretch": 4.0,
+    "preprocessing_time_ms": 29,
+    "tz_build_time_ms": 18527,
+    "routing_time_per_pair_us": 2311.372
   },
   {
     "nodes": 10000,
@@ -160,19 +160,19 @@
     "success_rate": 1.0,
     "stretch": 1846.6922011998154,
     "max_stretch": 13392.333333333334,
-    "preprocessing_time_ms": 34,
+    "preprocessing_time_ms": 51,
     "tz_build_time_ms": 0,
-    "routing_time_per_pair_us": 11518.548
+    "routing_time_per_pair_us": 8610.282
   },
   {
     "nodes": 10000,
     "edges": 29994,
     "strategy": "PIE+TZ",
     "success_rate": 1.0,
-    "stretch": 1.2468850946008307,
-    "max_stretch": 4.0,
-    "preprocessing_time_ms": 34,
-    "tz_build_time_ms": 122308,
-    "routing_time_per_pair_us": 2844.812
+    "stretch": 1.6649746192893402,
+    "max_stretch": 5.0,
+    "preprocessing_time_ms": 51,
+    "tz_build_time_ms": 47570,
+    "routing_time_per_pair_us": 3338.924
   }
 ]

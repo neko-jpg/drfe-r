@@ -930,6 +930,15 @@ impl GPRouter {
         }
         edges
     }
+
+    /// Build adjacency map from current router state
+    pub fn build_adjacency_map(&self) -> HashMap<NodeId, Vec<NodeId>> {
+        let mut adjacency = HashMap::new();
+        for node in self.nodes.values() {
+            adjacency.insert(node.id.clone(), node.neighbors.clone());
+        }
+        adjacency
+    }
 }
 
 impl Default for GPRouter {

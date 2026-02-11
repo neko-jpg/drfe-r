@@ -96,6 +96,7 @@ fn main() {
 
     let seed = 42u64;
     let num_tests = 500;
+    let seeds: Vec<u64> = vec![42, 43, 44, 45, 46]; // Multi-seed for statistical rigor
 
     // Create output directory
     std::fs::create_dir_all("paper_data/comprehensive").ok();
@@ -107,12 +108,23 @@ fn main() {
     let topology_results = run_topology_tests(1000, num_tests, seed);
     save_json(&topology_results, "paper_data/comprehensive/topology_results.json");
 
-    // 2. Scalability Tests
+    // 2. Scalability Tests (multi-seed for statistical confidence)
     println!("\n═══════════════════════════════════════════════════════════════");
-    println!("                    2. SCALABILITY TESTS                       ");
+    println!("                    2. SCALABILITY TESTS (multi-seed)           ");
     println!("═══════════════════════════════════════════════════════════════\n");
-    let scalability_results = run_scalability_tests(num_tests, seed);
+    let mut all_scalability_results = Vec::new();
+    for &s in &seeds {
+        println!("\n--- Seed {} ---", s);
+        let results = run_scalability_tests(num_tests, s);
+        all_scalability_results.push(results);
+    }
+    // Flatten for backward compatibility (use first seed for summary report)
+    let scalability_results = all_scalability_results[0].clone();
+    // Save all seeds data
+    save_json(&all_scalability_results, "paper_data/comprehensive/scalability_multiseed.json");
     save_json(&scalability_results, "paper_data/comprehensive/scalability_results.json");
+    // Generate confidence interval summary
+    generate_scalability_ci_report(&all_scalability_results);
 
     // 3. Memory Overhead
     println!("\n═══════════════════════════════════════════════════════════════");
@@ -1057,6 +1069,77 @@ fn format_bytes(bytes: usize) -> String {
     } else {
         format!("{:.1} MB", bytes as f64 / 1024.0 / 1024.0)
     }
+}
+
+/// Generate confidence interval report for multi-seed scalability results
+fn generate_scalability_ci_report(all_results: &[Vec<ScalabilityResult>]) {
+    let path = "paper_data/comprehensive/scalability_ci_report.md";
+    let mut f = match File::create(path) {
+        Ok(f) => f,
+        Err(_) => return,
+    };
+
+    writeln!(f, "# Scalability Results with 95% Confidence Intervals\n").ok();
+    writeln!(f, "Seeds: {} runs\n", all_results.len()).ok();
+    writeln!(f, "| Nodes | PIE+TZ Stretch (mean±CI) | Max Stretch (mean±CI) | Preprocess ms (mean±CI) |").ok();
+    writeln!(f, "|-------|--------------------------|----------------------|------------------------|").ok();
+
+    // Collect sizes from the first seed's results (PIE+TZ entries)
+    let sizes: Vec<usize> = all_results[0].iter()
+        .filter(|r| r.strategy == "PIE+TZ")
+        .map(|r| r.nodes)
+        .collect();
+
+    for &n in &sizes {
+        let mut stretches = Vec::new();
+        let mut max_stretches = Vec::new();
+        let mut preproc_times = Vec::new();
+
+        for seed_results in all_results {
+            for r in seed_results {
+                if r.nodes == n && r.strategy == "PIE+TZ" {
+                    stretches.push(r.stretch);
+                    max_stretches.push(r.max_stretch);
+                    preproc_times.push((r.preprocessing_time_ms + r.tz_build_time_ms) as f64);
+                }
+            }
+        }
+
+        let (s_mean, s_ci) = mean_ci(&stretches);
+        let (m_mean, m_ci) = mean_ci(&max_stretches);
+        let (p_mean, p_ci) = mean_ci(&preproc_times);
+
+        writeln!(f, "| {} | {:.3}x ± {:.3} | {:.2}x ± {:.2} | {:.0} ± {:.0} |",
+                 n, s_mean, s_ci, m_mean, m_ci, p_mean, p_ci).ok();
+    }
+
+    writeln!(f, "\n*95% CI computed using t-distribution with {} seeds*", all_results.len()).ok();
+    println!("  ✓ CI report saved to {}", path);
+}
+
+/// Compute mean and 95% confidence interval
+fn mean_ci(values: &[f64]) -> (f64, f64) {
+    let n = values.len() as f64;
+    if n < 2.0 {
+        return (values.first().copied().unwrap_or(0.0), 0.0);
+    }
+    let mean = values.iter().sum::<f64>() / n;
+    let variance = values.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / (n - 1.0);
+    let stderr = (variance / n).sqrt();
+    // t-value for 95% CI (approximate for small n)
+    let t = match values.len() {
+        2 => 12.706,
+        3 => 4.303,
+        4 => 3.182,
+        5 => 2.776,
+        6 => 2.571,
+        7 => 2.447,
+        8 => 2.365,
+        9 => 2.306,
+        10 => 2.262,
+        _ => 1.96,
+    };
+    (mean, t * stderr)
 }
 
 fn save_json<T: Serialize>(data: &T, path: &str) {

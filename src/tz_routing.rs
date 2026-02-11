@@ -16,6 +16,7 @@
 //! 3. Routing uses bunch membership or landmark hops
 
 use crate::coordinates::NodeId;
+use rayon::prelude::*;
 use std::collections::{HashMap, HashSet, VecDeque};
 
 /// Configuration for Thorup-Zwick routing
@@ -63,6 +64,11 @@ pub struct TZRoutingTable {
     pub landmark_next_hop: HashMap<(NodeId, NodeId), NodeId>,
     /// Next hop from any node to its closest landmark
     pub to_landmark_next_hop: HashMap<NodeId, NodeId>,
+    /// Next hop FROM landmark TOWARD any node (reverse of to_landmark_next_hop tree)
+    /// Maps (landmark, destination) -> next_hop from landmark toward destination
+    pub from_landmark_next_hop: HashMap<(NodeId, NodeId), NodeId>,
+    /// Parent map from each landmark's BFS tree: (landmark, node) -> parent of node
+    pub landmark_bfs_parents: HashMap<(NodeId, NodeId), NodeId>,
 }
 
 impl TZRoutingTable {
@@ -88,20 +94,24 @@ impl TZRoutingTable {
             return Err("No landmarks selected".to_string());
         }
 
-        // Compute distances from all landmarks (BFS from each)
+        // Compute distances from all landmarks (BFS from each) — parallelized with rayon
+        let landmark_results: Vec<(&NodeId, HashMap<NodeId, u32>, HashMap<NodeId, NodeId>)> =
+            landmarks.par_iter()
+                .map(|landmark| {
+                    let (distances, parents) = Self::bfs_with_parents(adjacency, landmark);
+                    (landmark, distances, parents)
+                })
+                .collect();
+
         let mut landmark_full_distances: HashMap<&NodeId, HashMap<NodeId, u32>> = HashMap::new();
         let mut landmark_parent: HashMap<&NodeId, HashMap<NodeId, NodeId>> = HashMap::new();
 
-        for landmark in &landmarks {
-            let (distances, parents) = Self::bfs_with_parents(adjacency, landmark);
+        for (landmark, distances, parents) in landmark_results {
             landmark_full_distances.insert(landmark, distances);
             landmark_parent.insert(landmark, parents);
         }
 
-        // For each node, find closest landmark and compute bunch
-        let mut node_info: HashMap<NodeId, TZNodeInfo> = HashMap::new();
-        let mut to_landmark_next_hop: HashMap<NodeId, NodeId> = HashMap::new();
-
+        // For each node, find closest landmark and compute bunch — parallelized with rayon
         // Optimization: Skip bunch computation for very large graphs
         // Bunch computation is O(n² × m) which is infeasible for large graphs
         let compute_bunches = n <= 10000;
@@ -110,61 +120,66 @@ impl TZRoutingTable {
             eprintln!("  Large graph detected ({} nodes). Skipping bunch computation for efficiency.", n);
         }
 
-        for (idx, node) in adjacency.keys().enumerate() {
-            // Progress indicator for large graphs
-            if n > 10000 && idx % 10000 == 0 {
-                eprintln!("  Processing node {}/{}", idx, n);
-            }
-            
-            // Find closest landmark
-            let mut closest_landmark = landmarks[0].clone();
-            let mut min_distance = u32::MAX;
+        let all_nodes: Vec<&NodeId> = adjacency.keys().collect();
 
-            for landmark in &landmarks {
-                if let Some(dists) = landmark_full_distances.get(landmark) {
-                    if let Some(&dist) = dists.get(node) {
-                        if dist < min_distance {
-                            min_distance = dist;
-                            closest_landmark = landmark.clone();
+        let per_node_results: Vec<(NodeId, TZNodeInfo, Option<(NodeId, NodeId)>)> =
+            all_nodes.par_iter()
+                .map(|node| {
+                    // Find closest landmark
+                    let mut closest_landmark = landmarks[0].clone();
+                    let mut min_distance = u32::MAX;
+
+                    for landmark in &landmarks {
+                        if let Some(dists) = landmark_full_distances.get(landmark) {
+                            if let Some(&dist) = dists.get(*node) {
+                                if dist < min_distance {
+                                    min_distance = dist;
+                                    closest_landmark = landmark.clone();
+                                }
+                            }
                         }
                     }
-                }
+
+                    // Compute bunch only for small graphs
+                    let bunch = if compute_bunches {
+                        let (node_distances, node_parents) = Self::bfs_with_parents(adjacency, node);
+                        let mut bunch: HashMap<NodeId, (u32, NodeId)> = HashMap::new();
+                        for (w, &dist) in &node_distances {
+                            if dist < min_distance {
+                                let next_hop = Self::find_next_hop_from_parents(node, w, &node_parents);
+                                bunch.insert(w.clone(), (dist, next_hop));
+                            }
+                        }
+                        bunch
+                    } else {
+                        HashMap::new()
+                    };
+
+                    // Compute next hop toward closest landmark
+                    let next_hop_entry = landmark_parent.get(&closest_landmark)
+                        .map(|parents| {
+                            let next = Self::find_next_hop_toward_source(node, &closest_landmark, parents);
+                            ((*node).clone(), next)
+                        });
+
+                    let info = TZNodeInfo {
+                        closest_landmark,
+                        landmark_distance: min_distance,
+                        bunch,
+                    };
+
+                    ((*node).clone(), info, next_hop_entry)
+                })
+                .collect();
+
+        let mut node_info: HashMap<NodeId, TZNodeInfo> = HashMap::with_capacity(n);
+        let mut to_landmark_next_hop: HashMap<NodeId, NodeId> = HashMap::with_capacity(n);
+
+        for (node_id, info, next_hop_entry) in per_node_results {
+            node_info.insert(node_id, info);
+            if let Some((key, val)) = next_hop_entry {
+                to_landmark_next_hop.insert(key, val);
             }
-
-            // Compute bunch only for small graphs
-            let bunch = if compute_bunches {
-                // Compute bunch: all nodes w such that d(node, w) < d(node, closest_landmark)
-                let (node_distances, node_parents) = Self::bfs_with_parents(adjacency, node);
-                let mut bunch: HashMap<NodeId, (u32, NodeId)> = HashMap::new();
-
-                for (w, &dist) in &node_distances {
-                    if dist < min_distance {
-                        // w is in the bunch
-                        // Find next hop toward w
-                        let next_hop = Self::find_next_hop_from_parents(node, w, &node_parents);
-                        bunch.insert(w.clone(), (dist, next_hop));
-                    }
-                }
-                bunch
-            } else {
-                // For large graphs, use empty bunch (rely on landmark routing only)
-                HashMap::new()
-            };
-
-            // Compute next hop toward closest landmark
-            if let Some(parents) = landmark_parent.get(&closest_landmark) {
-                let next_to_landmark = Self::find_next_hop_toward_source(node, &closest_landmark, parents);
-                to_landmark_next_hop.insert(node.clone(), next_to_landmark);
-            }
-
-            node_info.insert(
-                node.clone(),
-                TZNodeInfo {
-                    closest_landmark: closest_landmark.clone(),
-                    landmark_distance: min_distance,
-                    bunch,
-                },
-            );
         }
 
         // Compute landmark-to-landmark distances and routing
@@ -189,6 +204,50 @@ impl TZRoutingTable {
             }
         }
 
+        // Build from_landmark_next_hop and landmark_bfs_parents for Phase 3 path computation
+        // For each landmark, store the BFS parent of every reachable node
+        // and compute next-hop FROM landmark TOWARD each node — parallelized with rayon
+        let all_nodes_for_phase3: Vec<&NodeId> = adjacency.keys().collect();
+
+        let phase3_results: Vec<(Vec<((NodeId, NodeId), NodeId)>, Vec<((NodeId, NodeId), NodeId)>)> =
+            landmarks.par_iter()
+                .filter_map(|landmark| {
+                    landmark_parent.get(landmark).map(|parents| {
+                        let mut bfs_parents_entries = Vec::new();
+                        for (node, parent) in parents.iter() {
+                            bfs_parents_entries.push(
+                                ((landmark.clone(), node.clone()), parent.clone())
+                            );
+                        }
+
+                        let mut from_lm_entries = Vec::new();
+                        for node in &all_nodes_for_phase3 {
+                            if *node == landmark { continue; }
+                            let next = Self::find_next_hop_from_source_bfs(landmark, node, parents);
+                            if let Some(next_hop) = next {
+                                from_lm_entries.push(
+                                    ((landmark.clone(), (*node).clone()), next_hop)
+                                );
+                            }
+                        }
+
+                        (bfs_parents_entries, from_lm_entries)
+                    })
+                })
+                .collect();
+
+        let mut from_landmark_next_hop: HashMap<(NodeId, NodeId), NodeId> = HashMap::new();
+        let mut landmark_bfs_parents: HashMap<(NodeId, NodeId), NodeId> = HashMap::new();
+
+        for (bfs_entries, from_entries) in phase3_results {
+            for (key, val) in bfs_entries {
+                landmark_bfs_parents.insert(key, val);
+            }
+            for (key, val) in from_entries {
+                from_landmark_next_hop.insert(key, val);
+            }
+        }
+
         Ok(TZRoutingTable {
             config,
             landmarks,
@@ -196,6 +255,8 @@ impl TZRoutingTable {
             landmark_distances,
             landmark_next_hop,
             to_landmark_next_hop,
+            from_landmark_next_hop,
+            landmark_bfs_parents,
         })
     }
 
@@ -329,6 +390,72 @@ impl TZRoutingTable {
         parent_from_source.get(from).cloned().unwrap_or_else(|| from.clone())
     }
 
+    /// Find next hop FROM source TOWARD destination using BFS tree rooted at source.
+    /// parent_from_source[v] = parent of v in BFS from source.
+    /// We walk from destination back to source, then return the first child of source on that path.
+    fn find_next_hop_from_source_bfs(
+        source: &NodeId,
+        destination: &NodeId,
+        parent_from_source: &HashMap<NodeId, NodeId>,
+    ) -> Option<NodeId> {
+        if source == destination {
+            return None;
+        }
+        // Walk from destination toward source via parent pointers
+        let mut path_back = vec![destination.clone()];
+        let mut current = destination.clone();
+        let mut steps = 0;
+        let max_steps = parent_from_source.len() + 1;
+        while &current != source {
+            if let Some(parent) = parent_from_source.get(&current) {
+                path_back.push(parent.clone());
+                current = parent.clone();
+                steps += 1;
+                if steps > max_steps {
+                    return None; // cycle safety
+                }
+            } else {
+                return None; // unreachable
+            }
+        }
+        // path_back = [destination, ..., child_of_source, source]
+        // next hop from source = second-to-last element
+        if path_back.len() >= 2 {
+            Some(path_back[path_back.len() - 2].clone())
+        } else {
+            None
+        }
+    }
+
+    /// Reconstruct full BFS-tree path from source to destination
+    /// parent_from_source[v] = parent of v in BFS from source
+    fn reconstruct_bfs_path(
+        source: &NodeId,
+        destination: &NodeId,
+        parent_from_source: &HashMap<NodeId, NodeId>,
+    ) -> Option<Vec<NodeId>> {
+        if source == destination {
+            return Some(vec![source.clone()]);
+        }
+        // Walk from destination toward source
+        let mut path_back = vec![destination.clone()];
+        let mut current = destination.clone();
+        let max_steps = parent_from_source.len() + 1;
+        for _ in 0..max_steps {
+            if &current == source {
+                path_back.reverse();
+                return Some(path_back);
+            }
+            if let Some(parent) = parent_from_source.get(&current) {
+                path_back.push(parent.clone());
+                current = parent.clone();
+            } else {
+                return None;
+            }
+        }
+        None
+    }
+
     /// Get the next hop for routing from current to destination
     /// Returns (next_hop, is_destination)
     pub fn get_next_hop(&self, current: &NodeId, destination: &NodeId) -> Option<(NodeId, bool)> {
@@ -393,6 +520,8 @@ impl TZRoutingTable {
     }
 
     /// Compute path via landmarks (guaranteed to work if graph is connected)
+    /// Path: source -> src_landmark -> dst_landmark -> destination
+    /// Each phase follows BFS-tree shortest paths faithfully (no deduplication).
     fn compute_path_via_landmarks(
         &self,
         source: &NodeId,
@@ -404,31 +533,31 @@ impl TZRoutingTable {
         let src_landmark = &src_info.closest_landmark;
         let dst_landmark = &dst_info.closest_landmark;
 
-        // Path: source -> src_landmark -> dst_landmark -> destination
+        // Phase 1: source -> src_landmark (follow to_landmark_next_hop)
         let mut path = vec![source.clone()];
-        
-        // Phase 1: source to src_landmark
-        let mut current = source.clone();
-        let mut visited = HashSet::new();
-        visited.insert(current.clone());
-        
-        while current != *src_landmark {
-            if let Some(next) = self.to_landmark_next_hop.get(&current) {
-                if visited.contains(next) {
-                    break; // Avoid loop
+        if source != src_landmark {
+            let mut current = source.clone();
+            let mut visited = HashSet::new();
+            visited.insert(current.clone());
+            
+            while current != *src_landmark {
+                if let Some(next) = self.to_landmark_next_hop.get(&current) {
+                    if visited.contains(next) {
+                        break; // Avoid loop
+                    }
+                    visited.insert(next.clone());
+                    path.push(next.clone());
+                    current = next.clone();
+                } else {
+                    break;
                 }
-                visited.insert(next.clone());
-                path.push(next.clone());
-                current = next.clone();
-            } else {
-                break;
             }
         }
 
-        // Phase 2: src_landmark to dst_landmark (if different)
+        // Phase 2: src_landmark -> dst_landmark (follow landmark_next_hop)
         if src_landmark != dst_landmark {
-            current = src_landmark.clone();
-            visited.clear();
+            let mut current = src_landmark.clone();
+            let mut visited = HashSet::new();
             visited.insert(current.clone());
             
             while current != *dst_landmark {
@@ -437,9 +566,7 @@ impl TZRoutingTable {
                         break;
                     }
                     visited.insert(next.clone());
-                    if !path.contains(next) {
-                        path.push(next.clone());
-                    }
+                    path.push(next.clone());
                     current = next.clone();
                 } else {
                     break;
@@ -447,10 +574,41 @@ impl TZRoutingTable {
             }
         }
 
-        // Phase 3: dst_landmark to destination (reverse of destination to landmark)
-        // This is approximate - in practice, we'd need destination's BFS tree
-        if !path.contains(destination) {
-            path.push(destination.clone());
+        // Phase 3: dst_landmark -> destination
+        // Use the stored BFS parent map from dst_landmark to reconstruct the path
+        if path.last() != Some(destination) {
+            let landmark_for_dst = dst_landmark;
+            // Reconstruct path from dst_landmark to destination using BFS parents
+            let mut sub_path = vec![destination.clone()];
+            let mut current = destination.clone();
+            let max_steps = self.node_info.len();
+            for _ in 0..max_steps {
+                if &current == landmark_for_dst {
+                    break;
+                }
+                if let Some(parent) = self.landmark_bfs_parents.get(&(landmark_for_dst.clone(), current.clone())) {
+                    sub_path.push(parent.clone());
+                    current = parent.clone();
+                } else {
+                    // Fallback: just append destination
+                    if path.last() != Some(destination) {
+                        path.push(destination.clone());
+                    }
+                    return Some(path);
+                }
+            }
+            // sub_path is [destination, ..., child_of_landmark, dst_landmark(maybe)]
+            // Reverse to get dst_landmark -> ... -> destination
+            sub_path.reverse();
+            // Skip the first element if it's already the last element of path (dst_landmark)
+            let start = if !sub_path.is_empty() && path.last() == Some(&sub_path[0]) {
+                1
+            } else {
+                0
+            };
+            for node in &sub_path[start..] {
+                path.push(node.clone());
+            }
         }
 
         Some(path)
@@ -461,24 +619,39 @@ impl TZRoutingTable {
         let bunch_entries: usize = self.node_info.values().map(|info| info.bunch.len()).sum();
         let landmark_entries = self.landmark_distances.len() + self.landmark_next_hop.len();
         let node_entries = self.to_landmark_next_hop.len();
+        let from_landmark_entries = self.from_landmark_next_hop.len();
+        let bfs_parent_entries = self.landmark_bfs_parents.len();
         
-        bunch_entries + landmark_entries + node_entries
+        bunch_entries + landmark_entries + node_entries + from_landmark_entries + bfs_parent_entries
+    }
+
+    /// Rebuild the TZ table for a subgraph (e.g., after node/edge removal).
+    /// This re-selects landmarks from surviving nodes and recomputes all structures.
+    /// Much more resilient to targeted attacks than using the stale original table.
+    pub fn rebuild_for_subgraph(
+        surviving_adjacency: &HashMap<NodeId, Vec<NodeId>>,
+        config: TZConfig,
+    ) -> Result<Self, String> {
+        // Simply rebuild from scratch on the surviving subgraph
+        Self::build(surviving_adjacency, config)
     }
 
     /// Verify stretch guarantee on a sample of pairs
+    /// Returns (avg_stretch, max_stretch, num_violations)
+    /// Uses ratio-of-sums (Σ tz_hops / Σ optimal) for consistency with other benchmarks
     pub fn verify_stretch(
         &self,
         adjacency: &HashMap<NodeId, Vec<NodeId>>,
         num_samples: usize,
     ) -> (f64, f64, usize) {
-        // Returns: (avg_stretch, max_stretch, num_violations)
         let nodes: Vec<&NodeId> = adjacency.keys().collect();
         if nodes.len() < 2 {
             return (1.0, 1.0, 0);
         }
 
-        let mut total_stretch = 0.0;
-        let mut max_stretch = 0.0;
+        let mut total_tz_hops: u64 = 0;
+        let mut total_optimal: u64 = 0;
+        let mut max_stretch: f64 = 0.0;
         let mut violations = 0;
         let mut valid_samples = 0;
 
@@ -496,14 +669,15 @@ impl TZRoutingTable {
 
             // Compute TZ path length
             if let Some(tz_path) = self.compute_path(source, destination) {
-                let tz_len = tz_path.len() as u32 - 1; // hops
+                let tz_len = (tz_path.len() as u32).saturating_sub(1); // hops
 
                 // Compute optimal path length (BFS)
                 let (distances, _) = Self::bfs_with_parents(adjacency, source);
                 if let Some(&optimal) = distances.get(destination) {
                     if optimal > 0 {
                         let stretch = tz_len as f64 / optimal as f64;
-                        total_stretch += stretch;
+                        total_tz_hops += tz_len as u64;
+                        total_optimal += optimal as u64;
                         max_stretch = f64::max(max_stretch, stretch);
                         valid_samples += 1;
 
@@ -515,8 +689,8 @@ impl TZRoutingTable {
             }
         }
 
-        let avg_stretch = if valid_samples > 0 {
-            total_stretch / valid_samples as f64
+        let avg_stretch = if total_optimal > 0 {
+            total_tz_hops as f64 / total_optimal as f64
         } else {
             1.0
         };

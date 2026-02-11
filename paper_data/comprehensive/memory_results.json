@@ -1,57 +1,57 @@
 [
   {
     "nodes": 100,
-    "tz_table_entries": 526,
-    "tz_bytes_estimated": 25568,
-    "bytes_per_node": 255.68,
+    "tz_table_entries": 2506,
+    "tz_bytes_estimated": 120608,
+    "bytes_per_node": 1206.08,
     "landmark_count": 10,
     "avg_bunch_size": 2.46
   },
   {
     "nodes": 500,
-    "tz_table_entries": 4054,
-    "tz_bytes_estimated": 195328,
-    "bytes_per_node": 390.656,
+    "tz_table_entries": 27008,
+    "tz_bytes_estimated": 1297120,
+    "bytes_per_node": 2594.24,
     "landmark_count": 23,
     "avg_bunch_size": 5.084
   },
   {
     "nodes": 1000,
-    "tz_table_entries": 11923,
-    "tz_bytes_estimated": 573328,
-    "bytes_per_node": 573.328,
+    "tz_table_entries": 75859,
+    "tz_bytes_estimated": 3642256,
+    "bytes_per_node": 3642.256,
     "landmark_count": 32,
     "avg_bunch_size": 8.939
   },
   {
     "nodes": 2000,
-    "tz_table_entries": 32797,
-    "tz_bytes_estimated": 1575696,
-    "bytes_per_node": 787.848,
+    "tz_table_entries": 212707,
+    "tz_bytes_estimated": 10211376,
+    "bytes_per_node": 5105.688,
     "landmark_count": 45,
     "avg_bunch_size": 13.4185
   },
   {
     "nodes": 3000,
-    "tz_table_entries": 57733,
-    "tz_bytes_estimated": 2772944,
-    "bytes_per_node": 924.3146666666667,
+    "tz_table_entries": 387623,
+    "tz_bytes_estimated": 18607664,
+    "bytes_per_node": 6202.554666666667,
     "landmark_count": 55,
     "avg_bunch_size": 16.264333333333333
   },
   {
     "nodes": 5000,
-    "tz_table_entries": 104864,
-    "tz_bytes_estimated": 5035744,
-    "bytes_per_node": 1007.1488,
+    "tz_table_entries": 814722,
+    "tz_bytes_estimated": 39108928,
+    "bytes_per_node": 7821.7856,
     "landmark_count": 71,
     "avg_bunch_size": 17.9848
   },
   {
     "nodes": 10000,
-    "tz_table_entries": 266714,
-    "tz_bytes_estimated": 12805472,
-    "bytes_per_node": 1280.5472,
+    "tz_table_entries": 2266514,
+    "tz_bytes_estimated": 108795872,
+    "bytes_per_node": 10879.5872,
     "landmark_count": 100,
     "avg_bunch_size": 23.6914
   }

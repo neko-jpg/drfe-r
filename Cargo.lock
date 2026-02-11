@@ -615,6 +615,7 @@ dependencies = [
  "proptest",
  "prost",
  "rand 0.8.5",
+ "rayon",
  "rcgen",
  "rmp-serde",
  "rustls",

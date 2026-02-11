@@ -23,18 +23,18 @@
     "nodes": 500,
     "configuration": "PIE+TZ",
     "success_rate": 1.0,
-    "stretch": 1.3986275733000624,
-    "max_stretch": 4.0,
-    "gravity_pct": 47.01159678858162,
+    "stretch": 1.6918278228321897,
+    "max_stretch": 4.5,
+    "gravity_pct": 38.86430678466077,
     "pressure_pct": 0.0,
-    "tree_pct": 52.98840321141838
+    "tree_pct": 61.13569321533924
   },
   {
     "nodes": 500,
     "configuration": "TZ-only",
     "success_rate": 1.0,
-    "stretch": 0.8966933867735473,
-    "max_stretch": 2.0,
+    "stretch": 1.5191048034934498,
+    "max_stretch": 3.0,
     "gravity_pct": 0.0,
     "pressure_pct": 0.0,
     "tree_pct": 100.0
@@ -63,18 +63,18 @@
     "nodes": 1000,
     "configuration": "PIE+TZ",
     "success_rate": 1.0,
-    "stretch": 1.3672055427251733,
-    "max_stretch": 3.5,
-    "gravity_pct": 44.5945945945946,
+    "stretch": 1.699769053117783,
+    "max_stretch": 4.5,
+    "gravity_pct": 35.869565217391305,
     "pressure_pct": 0.0,
-    "tree_pct": 55.4054054054054
+    "tree_pct": 64.13043478260869
   },
   {
     "nodes": 1000,
     "configuration": "TZ-only",
     "success_rate": 1.0,
-    "stretch": 0.8610220440881768,
-    "max_stretch": 2.0,
+    "stretch": 1.1665804449042938,
+    "max_stretch": 3.0,
     "gravity_pct": 0.0,
     "pressure_pct": 0.0,
     "tree_pct": 100.0
@@ -103,18 +103,18 @@
     "nodes": 2000,
     "configuration": "PIE+TZ",
     "success_rate": 1.0,
-    "stretch": 1.353763440860215,
-    "max_stretch": 3.5,
-    "gravity_pct": 43.28832406671962,
+    "stretch": 1.7317204301075269,
+    "max_stretch": 4.0,
+    "gravity_pct": 33.840422229121394,
     "pressure_pct": 0.0,
-    "tree_pct": 56.71167593328038
+    "tree_pct": 66.15957777087861
   },
   {
     "nodes": 2000,
     "configuration": "TZ-only",
     "success_rate": 1.0,
-    "stretch": 0.8052772211088863,
-    "max_stretch": 1.5,
+    "stretch": 1.379611650485437,
+    "max_stretch": 3.5,
     "gravity_pct": 0.0,
     "pressure_pct": 0.0,
     "tree_pct": 100.0

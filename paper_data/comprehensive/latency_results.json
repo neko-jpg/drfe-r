@@ -2,41 +2,41 @@
   {
     "nodes": 100,
     "pie_embedding_ms": 0,
-    "tz_build_ms": 4,
-    "routing_decision_us": 0.44966,
-    "path_computation_us": 0.9591029999999999,
-    "total_preprocessing_ms": 4
+    "tz_build_ms": 116,
+    "routing_decision_us": 0.465523,
+    "path_computation_us": 1.309973,
+    "total_preprocessing_ms": 116
   },
   {
     "nodes": 500,
-    "pie_embedding_ms": 0,
-    "tz_build_ms": 115,
-    "routing_decision_us": 0.517415,
-    "path_computation_us": 1.1445239999999999,
-    "total_preprocessing_ms": 115
+    "pie_embedding_ms": 1,
+    "tz_build_ms": 24,
+    "routing_decision_us": 0.669524,
+    "path_computation_us": 1.746848,
+    "total_preprocessing_ms": 25
   },
   {
     "nodes": 1000,
-    "pie_embedding_ms": 1,
-    "tz_build_ms": 433,
-    "routing_decision_us": 0.800393,
-    "path_computation_us": 1.470359,
-    "total_preprocessing_ms": 434
+    "pie_embedding_ms": 2,
+    "tz_build_ms": 115,
+    "routing_decision_us": 1.123037,
+    "path_computation_us": 2.8460210000000004,
+    "total_preprocessing_ms": 117
   },
   {
     "nodes": 2000,
-    "pie_embedding_ms": 3,
-    "tz_build_ms": 1992,
-    "routing_decision_us": 1.4619490000000002,
-    "path_computation_us": 1.9098789999999999,
-    "total_preprocessing_ms": 1995
+    "pie_embedding_ms": 4,
+    "tz_build_ms": 564,
+    "routing_decision_us": 2.346282,
+    "path_computation_us": 7.178084,
+    "total_preprocessing_ms": 568
   },
   {
     "nodes": 5000,
-    "pie_embedding_ms": 10,
-    "tz_build_ms": 13819,
-    "routing_decision_us": 1.319677,
-    "path_computation_us": 2.4982800000000003,
-    "total_preprocessing_ms": 13829
+    "pie_embedding_ms": 18,
+    "tz_build_ms": 7843,
+    "routing_decision_us": 1.856949,
+    "path_computation_us": 4.476526,
+    "total_preprocessing_ms": 7861
   }
 ]

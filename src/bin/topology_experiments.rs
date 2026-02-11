@@ -392,12 +392,19 @@ fn generate_real_world(config: &TopologyConfig) -> GPRouter {
         }
     }
 
-    // Add inter-community links (more connections for better connectivity)
-    let inter_links = config.num_nodes / 5;  // Increased from /10
+    // Add inter-community links (sufficient for connectivity)
+    let inter_links = config.num_nodes / 3;  // More inter-links for realistic topology
     for _ in 0..inter_links {
-        let i = rng.gen_range(0..config.num_nodes);
-        let j = rng.gen_range(0..config.num_nodes);
-        if i != j && !adjacency_idx[i].contains(&j) {
+        let comm1 = rng.gen_range(0..num_communities);
+        let comm2 = rng.gen_range(0..num_communities);
+        if comm1 == comm2 { continue; }
+        let start1 = comm1 * nodes_per_community;
+        let end1 = if comm1 == num_communities - 1 { config.num_nodes } else { (comm1 + 1) * nodes_per_community };
+        let start2 = comm2 * nodes_per_community;
+        let end2 = if comm2 == num_communities - 1 { config.num_nodes } else { (comm2 + 1) * nodes_per_community };
+        let i = rng.gen_range(start1..end1);
+        let j = rng.gen_range(start2..end2);
+        if !adjacency_idx[i].contains(&j) {
             adjacency_idx[i].push(j);
             adjacency_idx[j].push(i);
         }
@@ -609,7 +616,11 @@ fn run_experiment(config: &TopologyConfig) -> ExperimentResult {
     let node_ids = router.node_ids();
     let actual_nodes = node_ids.len();
 
-    println!("Running {} routing tests...", config.num_tests);
+    // Dynamic TTL: scale with network size for better exploration
+    // Use at least 10*N to ensure enough room for Pressure + Tree/TZ exploration
+    let effective_ttl = config.max_ttl.max((actual_nodes as u32) * 10);
+
+    println!("Running {} routing tests (TTL={})...", config.num_tests, effective_ttl);
     let test_start = Instant::now();
 
     let mut rng = StdRng::seed_from_u64(config.seed + 1000);
@@ -641,7 +652,7 @@ fn run_experiment(config: &TopologyConfig) -> ExperimentResult {
                 source,
                 dest,
                 dest_node.coord.point,
-                config.max_ttl,
+                effective_ttl,
             );
 
             if result.success {
@@ -991,7 +1002,7 @@ fn main() {
                 topology_type: *topology_type,
                 num_nodes,
                 num_tests,
-                max_ttl: 100,
+                max_ttl: (num_nodes as u32) * 10, // Dynamic: 10x nodes for sufficient exploration
                 seed: *current_seed,
                 routing_algorithm,
                 ba_m: 3,

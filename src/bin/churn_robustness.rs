@@ -720,7 +720,7 @@ fn main() {
                     pairs.push((alive_vec[src_idx].clone(), alive_vec[dst_idx].clone()));
                 }
 
-                for strategy in ["pie", "pie_tz"] {
+                for strategy in ["pie", "pie_tz", "pie_tz_rebuild"] {
                     let mut successes = 0u64;
                     let mut total_hops = 0u64;
                     let mut total_optimal = 0u64;
@@ -728,6 +728,29 @@ fn main() {
                     let mut tz_hops_total = 0u64;
                     let mut all_hops = 0u64;
                     let mut stretch_samples: Vec<f64> = Vec::with_capacity(num_tests);
+
+                    // For pie_tz_rebuild, build a fresh TZ on the surviving subgraph
+                    let rebuilt_tz = if strategy == "pie_tz_rebuild" {
+                        let surviving_adj = router.build_adjacency_map();
+                        match TZRoutingTable::rebuild_for_subgraph(
+                            &surviving_adj,
+                            TZConfig { num_landmarks: None, seed: *current_seed },
+                        ) {
+                            Ok(table) => Some(table),
+                            Err(_) => None,
+                        }
+                    } else {
+                        None
+                    };
+                    // Skip if rebuild failed
+                    let effective_tz = if strategy == "pie_tz_rebuild" {
+                        match &rebuilt_tz {
+                            Some(t) => t,
+                            None => continue,
+                        }
+                    } else {
+                        &tz_table
+                    };
 
                     for (src, dst) in &pairs {
                         let result = if strategy == "pie" {
@@ -746,7 +769,7 @@ fn main() {
                             let max_gravity = alive_vec.len() as u32;
                             pie_tz_path_pruned(
                                 &router,
-                                &tz_table,
+                                effective_tz,
                                 src,
                                 dst,
                                 max_gravity,
