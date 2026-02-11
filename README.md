@@ -170,9 +170,9 @@ If you use this software, please cite:
 ```bibtex
 @software{drfe_r_2026,
   title  = {DRFE-R: Compact Routing with Adversarial Churn Resilience},
-  author = {arat2},
+  author = {neko-jpg},
   year   = {2026},
-  url    = {https://github.com/arat2/drfe_r}
+  url    = {https://github.com/neko-jpg/drfe-r}
 }
 ```
 
