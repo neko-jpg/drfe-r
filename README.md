@@ -168,7 +168,7 @@ service RoutingService {
 
 ## 理論的背景
 
-詳細は [theory.md](theory.md) を参照してください。
+詳細は [[theory.md](https://github.com/neko-jpg/drfe-r/blob/71087d2e8578a07885cae8368da6c8aedcd58b50/docs/theory.md)](theory.md) を参照してください。
 
 ### Coordinate-ID Paradox
 
